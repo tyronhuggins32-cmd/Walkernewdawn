@@ -1,0 +1,118 @@
+name: Build Walker New Dawn
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get project
+        uses: actions/checkout@v4
+
+      - name: Create missing Unity files
+        run: |
+          mkdir -p ProjectSettings
+          mkdir -p Packages
+          mkdir -p Assets/Editor
+
+          echo "m_EditorVersion: 2022.3.62f3" > ProjectSettings/ProjectVersion.txt
+
+          cat > Packages/manifest.json <<'EOF'
+          {
+            "dependencies": {
+              "com.unity.modules.animation": "1.0.0",
+              "com.unity.modules.audio": "1.0.0",
+              "com.unity.modules.imgui": "1.0.0",
+              "com.unity.modules.physics2d": "1.0.0",
+              "com.unity.modules.ui": "1.0.0"
+            }
+          }
+          EOF
+
+          cat > Assets/Editor/WebGLBuilder.cs <<'EOF'
+          using System;
+          using System.IO;
+          using UnityEditor;
+          using UnityEditor.Build.Reporting;
+          using UnityEditor.SceneManagement;
+          using UnityEngine.SceneManagement;
+
+          public static class WebGLBuilder
+          {
+              public static void Build()
+              {
+                  Directory.CreateDirectory("Assets/Scenes");
+                  Directory.CreateDirectory("build/WebGL");
+
+                  const string scenePath = "Assets/Scenes/Main.unity";
+
+                  Scene scene = EditorSceneManager.NewScene(
+                      NewSceneSetup.EmptyScene,
+                      NewSceneMode.Single
+                  );
+
+                  EditorSceneManager.SaveScene(scene, scenePath);
+
+                  PlayerSettings.productName = "Walker New Dawn";
+
+                  PlayerSettings.WebGL.compressionFormat =
+                      WebGLCompressionFormat.Disabled;
+
+                  PlayerSettings.WebGL.decompressionFallback = true;
+
+                  BuildPlayerOptions options = new BuildPlayerOptions
+                  {
+                      scenes = new[] { scenePath },
+                      locationPathName = "build/WebGL",
+                      target = BuildTarget.WebGL,
+                      options = BuildOptions.None
+                  };
+
+                  BuildReport report =
+                      BuildPipeline.BuildPlayer(options);
+
+                  if (report.summary.result != BuildResult.Succeeded)
+                      throw new Exception("WebGL build failed.");
+              }
+          }
+          EOF
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: 2022.3.62f3
+          targetPlatform: WebGL
+          buildMethod: WebGLBuilder.Build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload game
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/WebGL
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publish game
+        id: deployment
+        uses: actions/deploy-pages@v4
