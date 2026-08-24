@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
+<title>Walker: New Dawn</title>
+
+<style>
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #111315;
+    font-family: Arial, sans-serif;
+    touch-action: none;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+#title {
+    position: fixed;
+    left: 18px;
+    top: 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    pointer-events: none;
+    text-shadow: 2px 2px #000;
+}
+
+#sub {
+    position: fixed;
+    left: 18px;
+    top: 43px;
+    color: #aaa;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+#staminaBox {
+    position: fixed;
+    left: 18px;
+    top: 68px;
+    width: 160px;
+    height: 13px;
+    border: 2px solid #111;
+    background: #252525;
+    pointer-events: none;
+}
+
+#stamina {
+    width: 100%;
+    height: 100%;
+    background: #b7b58b;
+}
+
+#controls {
+    position: fixed;
+    left: 18px;
+    bottom: 16px;
+    color: #ddd;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+#joystickArea {
+    display: none;
+    position: fixed;
+    left: 20px;
+    bottom: 25px;
+    width: 125px;
+    height: 125px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.08);
+    border: 2px solid rgba(255,255,255,.16);
+}
+
+#stick {
+    position: absolute;
+    left: 39px;
+    top: 39px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.25);
+}
+
+#sprintButton {
+    display: none;
+    position: fixed;
+    right: 28px;
+    bottom: 38px;
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.25);
+    background: rgba(120,120,120,.22);
+    color: white;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    user-select: none;
+}
+
+@media (pointer: coarse) {
+    #joystickArea {
+        display: block;
+    }
+
+    #sprintButton {
+        display: flex;
+    }
+
+    #controls {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="title">WALKER: NEW DAWN</div>
+<div id="sub">NEW DAWN CITY • PROCEDURAL PROTOTYPE</div>
+
+<div id="staminaBox">
+    <div id="stamina"></div>
+</div>
+
+<div id="controls">
+    WASD / ARROWS • SHIFT TO SPRINT
+</div>
+
+<div id="joystickArea">
+    <div id="stick"></div>
+</div>
+
+<div id="sprintButton">SPRINT</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   WALKER: NEW DAWN
+   Browser prototype
+   ============================================================ */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+ctx.imageSmoothingEnabled = false;
+
+const staminaBar = document.getElementById("stamina");
+
+let screenWidth = innerWidth;
+let screenHeight = innerHeight;
+
+function resize() {
+    screenWidth = innerWidth;
+    screenHeight = innerHeight;
+
+    canvas.width = screenWidth * devicePixelRatio;
+    canvas.height = screenHeight * devicePixelRatio;
+
+    canvas.style.width = screenWidth + "px";
+    canvas.style.height = screenHeight + "px";
+
+    ctx.setTransform(
+        devicePixelRatio,
+        0,
+        0,
+        devicePixelRatio,
+        0,
+        0
+    );
+
+    ctx.imageSmoothingEnabled = false;
+}
+
+addEventListener("resize", resize);
+resize();
+
+/* ============================================================
+   WORLD SETTINGS
+   ============================================================ */
+
+const WORLD_SEED = 1987;
+
+const CHUNK_SIZE = 720;
+
+const ROAD_WIDTH = 118;
+const SIDEWALK_WIDTH = 34;
+
+const VIEW_DISTANCE = 2;
+
+const chunkCache = new Map();
+
+/* ============================================================
+   PLAYER
+   ============================================================ */
+
+const player = {
+    x: 0,
+    y: 0,
+
+    width: 20,
+    height: 30,
+
+    walkSpeed: 185,
+    sprintSpeed: 285,
+
+    stamina: 100,
+    maxStamina: 100,
+
+    direction: "down",
+
+    moving: false
+};
+
+const camera = {
+    x: player.x,
+    y: player.y
+};
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+
+const keys = {};
+
+addEventListener("keydown", event => {
+    keys[event.key.toLowerCase()] = true;
+});
+
+addEventListener("keyup", event => {
+    keys[event.key.toLowerCase()] = false;
+});
+
+/* ============================================================
+   MOBILE JOYSTICK
+   ============================================================ */
+
+const joystickArea =
+    document.getElementById("joystickArea");
+
+const stick =
+    document.getElementById("stick");
+
+const sprintButton =
+    document.getElementById("sprintButton");
+
+let joystickPointer = null;
+
+let joystickX = 0;
+let joystickY = 0;
+
+let sprintTouch = false;
+
+joystickArea.addEventListener(
+    "pointerdown",
+    event => {
+        joystickPointer = event.pointerId;
+        joystickArea.setPointerCapture(event.pointerId);
+
+        updateJoystick(event);
+    }
+);
+
+joystickArea.addEventListener(
+    "pointermove",
+    event => {
+        if (event.pointerId !== joystickPointer)
+            return;
+
+        updateJoystick(event);
+    }
+);
+
+function stopJoystick(event) {
+
+    if (
+        joystickPointer !== null &&
+        event.pointerId !== joystickPointer
+    )
+        return;
+
+    joystickPointer = null;
+
+    joystickX = 0;
+    joystickY = 0;
+
+    stick.style.transform =
+        "translate(0px, 0px)";
+}
+
+joystickArea.addEventListener(
+    "pointerup",
+    stopJoystick
+);
+
+joystickArea.addEventListener(
+    "pointercancel",
+    stopJoystick
+);
+
+function updateJoystick(event) {
+
+    const rect =
+        joystickArea.getBoundingClientRect();
+
+    const centerX =
+        rect.left + rect.width / 2;
+
+    const centerY =
+        rect.top + rect.height / 2;
+
+    let dx =
+        event.clientX - centerX;
+
+    let dy =
+        event.clientY - centerY;
+
+    const maxDistance = 40;
+
+    const distance =
+        Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > maxDistance) {
+
+        dx =
+            dx / distance *
+            maxDistance;
+
+        dy =
+            dy / distance *
+            maxDistance;
+    }
+
+    joystickX =
+        dx / maxDistance;
+
+    joystickY =
+        dy / maxDistance;
+
+    stick.style.transform =
+        `translate(${dx}px, ${dy}px)`;
+}
+
+sprintButton.addEventListener(
+    "pointerdown",
+    event => {
+        sprintTouch = true;
+
+        sprintButton.setPointerCapture(
+            event.pointerId
+        );
+    }
+);
+
+sprintButton.addEventListener(
+    "pointerup",
+    () => {
+        sprintTouch = false;
+    }
+);
+
+sprintButton.addEventListener(
+    "pointercancel",
+    () => {
+        sprintTouch = false;
+    }
+);
+
+/* ============================================================
+   DETERMINISTIC RANDOM NUMBERS
+   ============================================================ */
+
+function hash(x, y, extra = 0) {
+
+    let h =
+        WORLD_SEED ^
+        Math.imul(x, 374761393) ^
+        Math.imul(y, 668265263) ^
+        Math.imul(extra, 144269);
+
+    h =
+        Math.imul(
+            h ^ (h >>> 13),
+            1274126177
+        );
+
+    return (
+        (h ^ (h >>> 16)) >>> 0
+    );
+}
+
+function random01(x, y, extra = 0) {
+
+    return (
+        hash(x, y, extra) /
+        4294967295
+    );
+}
+
+function randomRange(
+    x,
+    y,
+    extra,
+    minimum,
+    maximum
+) {
+
+    return (
+        minimum +
+        random01(x, y, extra) *
+        (maximum - minimum)
+    );
+}
+
+/* ============================================================
+   CHUNK GENERATION
+   ============================================================ */
+
+function chunkKey(cx, cy) {
+    return cx + "," + cy;
+}
+
+function getChunk(cx, cy) {
+
+    const key =
+        chunkKey(cx, cy);
+
+    if (chunkCache.has(key))
+        return chunkCache.get(key);
+
+    const chunk =
+        generateChunk(cx, cy);
+
+    chunkCache.set(
+        key,
+        chunk
+    );
+
+    return chunk;
+}
+
+function generateChunk(cx, cy) {
+
+    const roll =
+        random01(cx, cy, 1);
+
+    let type = "buildings";
+
+    if (roll < 0.08) {
+        type = "park";
+    }
+    else if (roll < 0.16) {
+        type = "parking";
+    }
+    else if (roll < 0.21) {
+        type = "plaza";
+    }
+
+    const buildings = [];
+
+    if (type === "buildings") {
+
+        generateBuildings(
+            cx,
+            cy,
+            buildings
+        );
+    }
+
+    const trees = [];
+
+    if (type === "park") {
+
+        const treeCount =
+            7 +
+            Math.floor(
+                random01(cx, cy, 50) *
+                10
+            );
+
+        for (
+            let i = 0;
+            i < treeCount;
+            i++
+        ) {
+
+            trees.push({
+
+                x:
+                    ROAD_WIDTH +
+                    SIDEWALK_WIDTH +
+                    random01(cx, cy, 100 + i) *
+                    (
+                        CHUNK_SIZE -
+                        ROAD_WIDTH -
+                        SIDEWALK_WIDTH * 2 -
+                        60
+                    ),
+
+                y:
+                    ROAD_WIDTH +
+                    SIDEWALK_WIDTH +
+                    random01(cx, cy, 200 + i) *
+                    (
+                        CHUNK_SIZE -
+                        ROAD_WIDTH -
+                        SIDEWALK_WIDTH * 2 -
+                        60
+                    ),
+
+                size:
+                    20 +
+                    random01(cx, cy, 300 + i) *
+                    22
+            });
+        }
+    }
+
+    return {
+        cx,
+        cy,
+        type,
+        buildings,
+        trees
+    };
+}
+
+function generateBuildings(
+    cx,
+    cy,
+    buildings
+) {
+
+    const margin =
+        ROAD_WIDTH / 2 +
+        SIDEWALK_WIDTH +
+        12;
+
+    const usable =
+        CHUNK_SIZE -
+        margin * 2;
+
+    const density =
+        random01(cx, cy, 5);
+
+    let columns =
+        density > .6
+        ? 3
+        : 2;
+
+    let rows =
+        density > .72
+        ? 3
+        : 2;
+
+    const cellWidth =
+        usable / columns;
+
+    const cellHeight =
+        usable / rows;
+
+    let index = 0;
+
+    for (
+        let x = 0;
+        x < columns;
+        x++
+    ) {
+
+        for (
+            let y = 0;
+            y < rows;
+            y++
+        ) {
+
+            index++;
+
+            if (
+                random01(
+                    cx,
+                    cy,
+                    500 + index
+                ) < .08
+            )
+                continue;
+
+            const gap =
+                randomRange(
+                    cx,
+                    cy,
+                    600 + index,
+                    12,
+                    26
+                );
+
+            const bx =
+                margin +
+                x * cellWidth +
+                gap;
+
+            const by =
+                margin +
+                y * cellHeight +
+                gap;
+
+            const width =
+                cellWidth -
+                gap * 2;
+
+            const height =
+                cellHeight -
+                gap * 2;
+
+            buildings.push({
+                x: bx,
+                y: by,
+                width,
+                height,
+
+                colorIndex:
+                    hash(
+                        cx,
+                        cy,
+                        700 + index
+                    ) % 6
+            });
+        }
+    }
+}
+
+/* ============================================================
+   WORLD COORDINATES
+   ============================================================ */
+
+function worldToChunk(value) {
+
+    return Math.floor(
+        value /
+        CHUNK_SIZE
+    );
+}
+
+/* ============================================================
+   COLLISION
+   ============================================================ */
+
+function canMoveTo(x, y) {
+
+    const halfW =
+        player.width * .35;
+
+    const halfH =
+        player.height * .28;
+
+    const left =
+        x - halfW;
+
+    const right =
+        x + halfW;
+
+    const top =
+        y - halfH;
+
+    const bottom =
+        y + halfH;
+
+    const cx =
+        worldToChunk(x);
+
+    const cy =
+        worldToChunk(y);
+
+    for (
+        let ox = -1;
+        ox <= 1;
+        ox++
+    ) {
+
+        for (
+            let oy = -1;
+            oy <= 1;
+            oy++
+        ) {
+
+            const chunk =
+                getChunk(
+                    cx + ox,
+                    cy + oy
+                );
+
+            const baseX =
+                chunk.cx *
+                CHUNK_SIZE;
+
+            const baseY =
+                chunk.cy *
+                CHUNK_SIZE;
+
+            for (
+                const building
+                of chunk.buildings
+            ) {
+
+                const bx =
+                    baseX +
+                    building.x;
+
+                const by =
+                    baseY +
+                    building.y;
+
+                if (
+                    right > bx &&
+                    left <
+                    bx + building.width &&
+                    bottom > by &&
+                    top <
+                    by + building.height
+                ) {
+
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+/* ============================================================
+   UPDATE PLAYER
+   ============================================================ */
+
+function updatePlayer(dt) {
+
+    let dx = 0;
+    let dy = 0;
+
+    if (
+        keys["w"] ||
+        keys["arrowup"]
+    )
+        dy -= 1;
+
+    if (
+        keys["s"] ||
+        keys["arrowdown"]
+    )
+        dy += 1;
+
+    if (
+        keys["a"] ||
+        keys["arrowleft"]
+    )
+        dx -= 1;
+
+    if (
+        keys["d"] ||
+        keys["arrowright"]
+    )
+        dx += 1;
+
+    dx += joystickX;
+    dy += joystickY;
+
+    const magnitude =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+    player.moving =
+        magnitude > .05;
+
+    if (magnitude > 1) {
+
+        dx /= magnitude;
+        dy /= magnitude;
+    }
+
+    if (Math.abs(dx) >
+        Math.abs(dy)) {
+
+        if (dx > .05)
+            player.direction =
+                "right";
+
+        if (dx < -.05)
+            player.direction =
+                "left";
+    }
+    else {
+
+        if (dy > .05)
+            player.direction =
+                "down";
+
+        if (dy < -.05)
+            player.direction =
+                "up";
+    }
+
+    const wantsSprint =
+        keys["shift"] ||
+        sprintTouch;
+
+    const sprinting =
+        wantsSprint &&
+        player.moving &&
+        player.stamina > 0;
+
+    const speed =
+        sprinting
+        ? player.sprintSpeed
+        : player.walkSpeed;
+
+    if (sprinting) {
+
+        player.stamina -=
+            22 * dt;
+    }
+    else {
+
+        player.stamina +=
+            14 * dt;
+    }
+
+    player.stamina =
+        Math.max(
+            0,
+            Math.min(
+                player.maxStamina,
+                player.stamina
+            )
+        );
+
+    const nextX =
+        player.x +
+        dx *
+        speed *
+        dt;
+
+    if (
+        canMoveTo(
+            nextX,
+            player.y
+        )
+    ) {
+
+        player.x =
+            nextX;
+    }
+
+    const nextY =
+        player.y +
+        dy *
+        speed *
+        dt;
+
+    if (
+        canMoveTo(
+            player.x,
+            nextY
+        )
+    ) {
+
+        player.y =
+            nextY;
+    }
+
+    staminaBar.style.width =
+        (
+            player.stamina /
+            player.maxStamina *
+            100
+        ) + "%";
+}
+
+/* ============================================================
+   CAMERA
+   ============================================================ */
+
+function updateCamera(dt) {
+
+    const smoothing =
+        Math.min(
+            1,
+            dt * 7
+        );
+
+    camera.x +=
+        (
+            player.x -
+            camera.x
+        ) *
+        smoothing;
+
+    camera.y +=
+        (
+            player.y -
+            camera.y
+        ) *
+        smoothing;
+}
+
+/* ============================================================
+   DRAW HELPERS
+   ============================================================ */
+
+function screenX(worldX) {
+
+    return (
+        worldX -
+        camera.x +
+        screenWidth / 2
+    );
+}
+
+function screenY(worldY) {
+
+    return (
+        worldY -
+        camera.y +
+        screenHeight / 2
+    );
+}
+
+function fillRectWorld(
+    x,
+    y,
+    width,
+    height,
+    color
+) {
+
+    ctx.fillStyle = color;
+
+    ctx.fillRect(
+        Math.floor(screenX(x)),
+        Math.floor(screenY(y)),
+        Math.ceil(width),
+        Math.ceil(height)
+    );
+}
+
+/* ============================================================
+   DRAW CHUNKS
+   ============================================================ */
+
+const buildingColors = [
+    "#564a42",
+    "#65564c",
+    "#48494a",
+    "#70675a",
+    "#41454a",
+    "#634943"
+];
+
+function drawChunk(chunk) {
+
+    const baseX =
+        chunk.cx *
+        CHUNK_SIZE;
+
+    const baseY =
+        chunk.cy *
+        CHUNK_SIZE;
+
+    /* background */
+
+    fillRectWorld(
+        baseX,
+        baseY,
+        CHUNK_SIZE,
+        CHUNK_SIZE,
+        "#242728"
+    );
+
+    /* roads */
+
+    fillRectWorld(
+        baseX -
+        ROAD_WIDTH / 2,
+        baseY,
+        ROAD_WIDTH,
+        CHUNK_SIZE,
+        "#17191a"
+    );
+
+    fillRectWorld(
+        baseX,
+        baseY -
+        ROAD_WIDTH / 2,
+        CHUNK_SIZE,
+        ROAD_WIDTH,
+        "#17191a"
+    );
+
+    /* sidewalks */
+
+    fillRectWorld(
+        baseX +
+        ROAD_WIDTH / 2,
+        baseY +
+        ROAD_WIDTH / 2,
+        SIDEWALK_WIDTH,
+        CHUNK_SIZE -
+        ROAD_WIDTH / 2,
+        "#62615d"
+    );
+
+    fillRectWorld(
+        baseX +
+        ROAD_WIDTH / 2,
+        baseY +
+        ROAD_WIDTH / 2,
+        CHUNK_SIZE -
+        ROAD_WIDTH / 2,
+        SIDEWALK_WIDTH,
+        "#62615d"
+    );
+
+    /* road markings */
+
+    ctx.fillStyle =
+        "#aaa676";
+
+    for (
+        let i = 100;
+        i < CHUNK_SIZE;
+        i += 90
+    ) {
+
+        fillRectWorld(
+            baseX - 2,
+            baseY + i,
+            4,
+            38,
+            "#aaa676"
+        );
+
+        fillRectWorld(
+            baseX + i,
+            baseY - 2,
+            38,
+            4,
+            "#aaa676"
+        );
+    }
+
+    if (
+        chunk.type ===
+        "buildings"
+    ) {
+
+        drawBuildings(
+            chunk,
+            baseX,
+            baseY
+        );
+    }
+
+    if (
+        chunk.type ===
+        "park"
+    ) {
+
+        drawPark(
+            chunk,
+            baseX,
+            baseY
+        );
+    }
+
+    if (
+        chunk.type ===
+        "parking"
+    ) {
+
+        drawParking(
+            chunk,
+            baseX,
+            baseY
+        );
+    }
+
+    if (
+        chunk.type ===
+        "plaza"
+    ) {
+
+        drawPlaza(
+            chunk,
+            baseX,
+            baseY
+        );
+    }
+}
+
+function drawBuildings(
+    chunk,
+    baseX,
+    baseY
+) {
+
+    for (
+        const building
+        of chunk.buildings
+    ) {
+
+        const x =
+            baseX +
+            building.x;
+
+        const y =
+            baseY +
+            building.y;
+
+        /* shadow */
+
+        fillRectWorld(
+            x - 7,
+            y + 7,
+            building.width,
+            building.height,
+            "#0d0e0f"
+        );
+
+        /* building */
+
+        fillRectWorld(
+            x,
+            y,
+            building.width,
+            building.height,
+            buildingColors[
+                building.colorIndex
+            ]
+        );
+
+        /* roof inset */
+
+        fillRectWorld(
+            x + 8,
+            y + 8,
+            building.width - 16,
+            building.height - 16,
+            "#414142"
+        );
+
+        /* roof units */
+
+        fillRectWorld(
+            x +
+            building.width *
+            .35,
+            y +
+            building.height *
+            .35,
+            22,
+            18,
+            "#282a2b"
+        );
+
+        fillRectWorld(
+            x +
+            building.width *
+            .65,
+            y +
+            building.height *
+            .58,
+            17,
+            15,
+            "#2d2e2e"
+        );
+
+        /* entrance */
+
+        fillRectWorld(
+            x +
+            building.width / 2 -
+            10,
+            y +
+            building.height -
+            5,
+            20,
+            5,
+            "#17130f"
+        );
+    }
+}
+
+function drawPark(
+    chunk,
+    baseX,
+    baseY
+) {
+
+    const margin =
+        ROAD_WIDTH / 2 +
+        SIDEWALK_WIDTH;
+
+    fillRectWorld(
+        baseX + margin,
+        baseY + margin,
+        CHUNK_SIZE - margin * 2,
+        CHUNK_SIZE - margin * 2,
+        "#263b26"
+    );
+
+    fillRectWorld(
+        baseX +
+        CHUNK_SIZE / 2 -
+        10,
+        baseY + margin,
+        20,
+        CHUNK_SIZE -
+        margin * 2,
+        "#726b58"
+    );
+
+    fillRectWorld(
+        baseX + margin,
+        baseY +
+        CHUNK_SIZE / 2 -
+        10,
+        CHUNK_SIZE -
+        margin * 2,
+        20,
+        "#726b58"
+    );
+
+    for (
+        const tree
+        of chunk.trees
+    ) {
+
+        const x =
+            screenX(
+                baseX +
+                tree.x
+            );
+
+        const y =
+            screenY(
+                baseY +
+                tree.y
+            );
+
+        ctx.fillStyle =
+            "#182719";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x + 4,
+            y + 5,
+            tree.size / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle =
+            "#345a30";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            tree.size / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+}
+
+function drawParking(
+    chunk,
+    baseX,
+    baseY
+) {
+
+    const margin =
+        ROAD_WIDTH / 2 +
+        SIDEWALK_WIDTH;
+
+    fillRectWorld(
+        baseX + margin,
+        baseY + margin,
+        CHUNK_SIZE - margin * 2,
+        CHUNK_SIZE - margin * 2,
+        "#27292a"
+    );
+
+    for (
+        let x =
+            margin + 45;
+        x <
+        CHUNK_SIZE -
+        margin;
+        x += 65
+    ) {
+
+        fillRectWorld(
+            baseX + x,
+            baseY + margin + 20,
+            3,
+            CHUNK_SIZE -
+            margin * 2 -
+            40,
+            "#8c8b78"
+        );
+    }
+}
+
+function drawPlaza(
+    chunk,
+    baseX,
+    baseY
+) {
+
+    const margin =
+        ROAD_WIDTH / 2 +
+        SIDEWALK_WIDTH;
+
+    fillRectWorld(
+        baseX + margin,
+        baseY + margin,
+        CHUNK_SIZE - margin * 2,
+        CHUNK_SIZE - margin * 2,
+        "#6a6862"
+    );
+
+    const centerX =
+        baseX +
+        CHUNK_SIZE / 2;
+
+    const centerY =
+        baseY +
+        CHUNK_SIZE / 2;
+
+    fillRectWorld(
+        centerX - 42,
+        centerY - 42,
+        84,
+        84,
+        "#32342f"
+    );
+
+    const sx =
+        screenX(centerX);
+
+    const sy =
+        screenY(centerY);
+
+    ctx.fillStyle =
+        "#385636";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        sx,
+        sy,
+        29,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+}
+
+/* ============================================================
+   PLAYER SPRITE
+   ============================================================ */
+
+function drawPlayer() {
+
+    const x =
+        Math.floor(
+            screenWidth / 2
+        );
+
+    const y =
+        Math.floor(
+            screenHeight / 2
+        );
+
+    /* shadow */
+
+    ctx.fillStyle =
+        "rgba(0,0,0,.45)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x,
+        y + 13,
+        10,
+        5,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /* legs */
+
+    ctx.fillStyle =
+        "#25292d";
+
+    ctx.fillRect(
+        x - 7,
+        y + 4,
+        5,
+        11
+    );
+
+    ctx.fillRect(
+        x + 2,
+        y + 4,
+        5,
+        11
+    );
+
+    /* body */
+
+    ctx.fillStyle =
+        "#46515a";
+
+    ctx.fillRect(
+        x - 9,
+        y - 9,
+        18,
+        16
+    );
+
+    /* head */
+
+    ctx.fillStyle =
+        "#a77958";
+
+    ctx.fillRect(
+        x - 6,
+        y - 19,
+        12,
+        11
+    );
+
+    /* hair */
+
+    ctx.fillStyle =
+        "#201c19";
+
+    ctx.fillRect(
+        x - 6,
+        y - 20,
+        12,
+        4
+    );
+
+    /* facing indicator */
+
+    ctx.fillStyle =
+        "#d2d0bd";
+
+    let fx = x;
+    let fy = y;
+
+    if (
+        player.direction ===
+        "up"
+    )
+        fy -= 25;
+
+    if (
+        player.direction ===
+        "down"
+    )
+        fy += 21;
+
+    if (
+        player.direction ===
+        "left"
+    )
+        fx -= 15;
+
+    if (
+        player.direction ===
+        "right"
+    )
+        fx += 15;
+
+    ctx.fillRect(
+        fx - 2,
+        fy - 2,
+        4,
+        4
+    );
+}
+
+/* ============================================================
+   WORLD DRAW
+   ============================================================ */
+
+function drawWorld() {
+
+    ctx.fillStyle =
+        "#111315";
+
+    ctx.fillRect(
+        0,
+        0,
+        screenWidth,
+        screenHeight
+    );
+
+    const playerChunkX =
+        worldToChunk(
+            camera.x
+        );
+
+    const playerChunkY =
+        worldToChunk(
+            camera.y
+        );
+
+    for (
+        let x = -VIEW_DISTANCE;
+        x <= VIEW_DISTANCE;
+        x++
+    ) {
+
+        for (
+            let y = -VIEW_DISTANCE;
+            y <= VIEW_DISTANCE;
+            y++
+        ) {
+
+            drawChunk(
+                getChunk(
+                    playerChunkX + x,
+                    playerChunkY + y
+                )
+            );
+        }
+    }
+
+    drawPlayer();
+}
+
+/* ============================================================
+   GAME LOOP
+   ============================================================ */
+
+let previousTime =
+    performance.now();
+
+function gameLoop(time) {
+
+    const dt =
+        Math.min(
+            .05,
+            (
+                time -
+                previousTime
+            ) /
+            1000
+        );
+
+    previousTime = time;
+
+    updatePlayer(dt);
+
+    updateCamera(dt);
+
+    drawWorld();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+}
+
+requestAnimationFrame(
+    gameLoop
+);
+
+</script>
+</body>
+</html>
