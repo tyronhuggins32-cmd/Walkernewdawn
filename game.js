@@ -1390,7 +1390,8 @@ function getRenderChunk(rx,ry){
 }
 
 function drawCachedChunk(rx,ry){
-  const layer=getRenderChunk(rx,ry);
+  const layer=
+    getRenderChunk(rx,ry);
 
   const origin=project(
     rx*RENDER_CHUNK,
@@ -1398,15 +1399,70 @@ function drawCachedChunk(rx,ry){
     0
   );
 
+  const anchorX=
+    RENDER_CHUNK*
+    TILE_W/2+
+    8;
+
+  const anchorY=8;
+
+  const wide=
+    TILE_W/
+    TILE_H;
+
+  const tall=
+    TILE_H/
+    TILE_W;
+
+  ctx.save();
+
+  ctx.translate(
+    Math.round(origin.x),
+    Math.round(origin.y)
+  );
+
+  switch(cameraRotation&3){
+    case 1:
+      ctx.transform(
+        0,
+        tall,
+        -wide,
+        0,
+        0,
+        0
+      );
+      break;
+
+    case 2:
+      ctx.transform(
+        -1,
+        0,
+        0,
+        -1,
+        0,
+        0
+      );
+      break;
+
+    case 3:
+      ctx.transform(
+        0,
+        -tall,
+        wide,
+        0,
+        0,
+        0
+      );
+      break;
+  }
+
   ctx.drawImage(
     layer,
-    Math.round(
-      origin.x-
-      RENDER_CHUNK*TILE_W/2-
-      8
-    ),
-    Math.round(origin.y-8)
+    -anchorX,
+    -anchorY
   );
+
+  ctx.restore();
 }
 
 function pruneCaches(){
