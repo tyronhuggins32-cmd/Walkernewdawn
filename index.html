@@ -1,17 +1,1917 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Walker: New Dawn</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b0c;color:#eee;font-family:Arial,sans-serif;touch-action:none}
+button,input{font:inherit}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+#hud{position:fixed;left:14px;top:12px;z-index:5;display:none;text-shadow:2px 2px #000;pointer-events:none}
+#hud b{font-size:17px;letter-spacing:1px}
+#area,#seedView{margin-top:4px;font-size:10px;color:#aaa99d}
+#staminaBox{width:150px;height:9px;margin-top:8px;border:2px solid #090a0b;background:#25282a}
+#stamina{height:100%;width:100%;background:#aaa66e}
+#menuBtn{display:none;position:fixed;right:14px;top:14px;z-index:8;padding:9px 12px;border:1px solid #55584f;background:#151918dd;color:#ddd9c7;font-size:10px;font-weight:900;letter-spacing:1.4px}
+body.playing #hud,body.playing #menuBtn{display:block}
+#menu{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 35%,#303831 0,#0c0f10 48%,#050607 100%)}
+#menu.hidden{display:none}
+.panel{width:min(470px,100%);padding:32px;border:1px solid #55584d;border-top:3px solid #aaa66e;background:#141819f5;box-shadow:0 25px 80px #000;color:#ecebdd}
+.kicker{margin:0 0 8px;color:#aaa66e;font-size:10px;font-weight:900;letter-spacing:3px}
+.panel h1{margin:0;font-family:Impact,"Arial Narrow",sans-serif;font-size:clamp(44px,12vw,66px);font-weight:400;line-height:.88;text-transform:uppercase;text-shadow:4px 5px #080a0b}
+.sub{margin:16px 0 25px;color:#a9aaa2;font-size:12px;line-height:1.5}
+.panel label{display:block;margin-bottom:7px;font-size:10px;font-weight:900;letter-spacing:1.5px}
+.seedRow{display:grid;grid-template-columns:1fr 48px;gap:8px}
+.seedRow input{min-width:0;padding:13px;border:1px solid #4d5049;outline:0;background:#080a0b;color:#f2efdf;font:16px "Courier New",monospace}
+.seedRow input:focus{border-color:#b2ad73}
+.seedRow button{border:1px solid #4d5049;background:#252a27;color:#ddd8c4;font-size:21px}
+.actions{display:grid;gap:8px;margin-top:13px}
+.actions button{min-height:48px;font-size:11px;font-weight:900;letter-spacing:2px}
+.start{border:1px solid #cbc58b;background:#a9a36b;color:#101211}
+.continue{border:1px solid #50534d;background:transparent;color:#ddd}
+.types{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:22px}
+.types span{padding:8px 3px;border:1px solid #ffffff18;color:#999b93;font-size:8px;font-weight:900;text-align:center;text-transform:uppercase}
+.note{margin:14px 0 0;color:#747870;font-size:9px;line-height:1.5;text-align:center}
+#joy{display:none;position:fixed;left:20px;bottom:22px;z-index:7;width:122px;height:122px;border:2px solid #ffffff2c;border-radius:50%;background:#ffffff0d}
+#stick{position:absolute;left:39px;top:39px;width:42px;height:42px;border-radius:50%;background:#ffffff40}
+#run{display:none;position:fixed;right:25px;bottom:34px;z-index:7;width:82px;height:82px;border:2px solid #ffffff2e;border-radius:50%;background:#ffffff12;color:#fff;font-size:11px;font-weight:900;align-items:center;justify-content:center;user-select:none}
+@media(pointer:coarse){
+body.playing #joy{display:block}
+body.playing #run{display:flex}
+}
+@media(max-width:520px){
+.panel{padding:27px 21px}
+.types{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
 
-WALKER: NEW DAWN
-NEW DAWN CITY
-SEED • —
+<canvas id="game"></canvas>
 
-CITY SURVIVAL PROTOTYPE
-WALKER: NEW DAWN
-Every seed builds a repeatable New Dawn City with connected neighborhoods, enterable buildings, alleys, streets, and interiors.
-WORLD SEED
+<div id="hud">
+  <b>WALKER: NEW DAWN</b>
+  <div id="area">NEW DAWN CITY</div>
+  <div id="seedView">SEED • —</div>
+  <div id="staminaBox"><div id="stamina"></div></div>
+</div>
 
-↻
-GENERATE CITY
-HOUSES
-APARTMENTS
-DELIS
-POLICE
-Text and number seeds both work. One tile represents one meter, and the same seed always rebuilds the same city.
+<button id="menuBtn" type="button">MENU</button>
+
+<div id="joy"><div id="stick"></div></div>
+<div id="run">SPRINT</div>
+
+<div id="menu" role="dialog" aria-modal="true">
+  <main class="panel">
+    <p class="kicker">CITY SURVIVAL PROTOTYPE</p>
+    <h1>Walker:<br>New Dawn</h1>
+    <p class="sub">
+      Enter any seed to build a repeatable, human-scale city with
+      connected streets and enterable interiors.
+    </p>
+
+    <label for="seed">WORLD SEED</label>
+
+    <div class="seedRow">
+      <input id="seed" maxlength="40" autocomplete="off" spellcheck="false">
+      <button id="random" type="button" aria-label="Random seed">↻</button>
+    </div>
+
+    <div class="actions">
+      <button class="start" id="start" type="button">GENERATE CITY</button>
+      <button class="continue" id="continue" type="button" hidden>
+        RETURN TO CITY
+      </button>
+    </div>
+
+    <div class="types">
+      <span>Houses</span>
+      <span>Apartments</span>
+      <span>Delis</span>
+      <span>Police</span>
+    </div>
+
+    <p class="note">
+      One tile equals one meter. The same seed always rebuilds the same city.
+    </p>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+/* CANVAS */
+
+const canvas = document.querySelector("#game");
+const ctx = canvas.getContext("2d");
+
+let SW = innerWidth;
+let SH = innerHeight;
+
+function resize() {
+  SW = innerWidth;
+  SH = innerHeight;
+
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+
+  canvas.width = Math.floor(SW * dpr);
+  canvas.height = Math.floor(SH * dpr);
+  canvas.style.width = SW + "px";
+  canvas.style.height = SH + "px";
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+}
+
+addEventListener("resize", resize);
+resize();
+
+/* HUMAN-SCALE WORLD */
+
+const PX = 18;          // 18 pixels represents one meter
+const BLOCK = 64;       // 64-meter city block
+const ROAD = 8;         // 8-meter two-lane road
+const WALK = 1.8 * PX;  // 1.8 meters per second
+const SPRINT = 4 * PX;  // 4 meters per second
+
+const BUILD_MIN = 10;
+const BUILD_MAX = 62;
+const CHUNK_PX = BLOCK * PX;
+
+const COLORS = {
+  road: "#1b1e20",
+  line: "#a79b54",
+  sidewalk: "#60615c",
+  lot: "#30332f",
+  grass: "#29402a",
+  parking: "#2b2d2e",
+  house: "#716858",
+  apartment: "#66635c",
+  deli: "#675f50",
+  police: "#60696c",
+  brick: "#4d4037",
+  concrete: "#494b49",
+  storeWall: "#57534b",
+  policeWall: "#3d4b52",
+  door: "#805a3d"
+};
+
+/* SEEDED RANDOMNESS */
+
+let seedLabel = "NEW-DAWN-1987";
+let worldSeed = 1;
+
+function seedNumber(text) {
+  let h = 2166136261;
+
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+
+  h ^= h >>> 16;
+  h = Math.imul(h, 2246822507);
+
+  return (h >>> 0) || 1;
+}
+
+function hash(x, y, salt = 0) {
+  let h =
+    worldSeed ^
+    Math.imul(x, 374761393) ^
+    Math.imul(y, 668265263) ^
+    Math.imul(salt, 1442695041);
+
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
+function rand(x, y, salt = 0) {
+  return hash(x, y, salt) / 4294967296;
+}
+
+function mod(number, divisor) {
+  return ((number % divisor) + divisor) % divisor;
+}
+
+function lerp(a, b, amount) {
+  return a + (b - a) * amount;
+}
+
+function noise(x, y, salt) {
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const tx = x - x0;
+  const ty = y - y0;
+
+  const smoothX = tx * tx * (3 - 2 * tx);
+  const smoothY = ty * ty * (3 - 2 * ty);
+
+  return lerp(
+    lerp(
+      rand(x0, y0, salt),
+      rand(x0 + 1, y0, salt),
+      smoothX
+    ),
+    lerp(
+      rand(x0, y0 + 1, salt),
+      rand(x0 + 1, y0 + 1, salt),
+      smoothX
+    ),
+    smoothY
+  );
+}
+
+function density(cx, cy) {
+  return (
+    noise(cx / 7, cy / 7, 20) * 0.72 +
+    noise(cx / 3, cy / 3, 21) * 0.28
+  );
+}
+
+/* One police station is guaranteed in every 6×6 block sector. */
+
+function isPolice(cx, cy) {
+  const sectorX = Math.floor(cx / 6);
+  const sectorY = Math.floor(cy / 6);
+
+  const policeX = sectorX * 6 + hash(sectorX, sectorY, 30) % 6;
+  const policeY = sectorY * 6 + hash(sectorX, sectorY, 31) % 6;
+
+  return cx === policeX && cy === policeY;
+}
+
+/* Commercial blocks follow repeating corridors. */
+
+function isCommercial(cx, cy) {
+  const vertical =
+    mod(cx + hash(0, Math.floor(cy / 10), 40) % 3, 6) === 0;
+
+  const horizontal =
+    mod(cy + hash(Math.floor(cx / 10), 0, 41) % 3, 7) === 0;
+
+  return vertical || horizontal;
+}
+
+/* WORLD DATA */
+
+const chunks = new Map();
+
+function key(x, y) {
+  return x + "," + y;
+}
+
+function wall(chunk, x, y, type) {
+  chunk.walls.set(key(x, y), type);
+  chunk.solid.add(key(x, y));
+}
+
+function clearWall(chunk, x, y) {
+  chunk.walls.delete(key(x, y));
+  chunk.solid.delete(key(x, y));
+}
+
+function lineH(chunk, y, x1, x2, gap, type) {
+  for (let x = x1; x <= x2; x++) {
+    if (x !== gap) wall(chunk, x, y, type);
+  }
+}
+
+function lineV(chunk, x, y1, y2, gap, type) {
+  for (let y = y1; y <= y2; y++) {
+    if (y !== gap) wall(chunk, x, y, type);
+  }
+}
+
+function addProp(
+  chunk,
+  kind,
+  x,
+  y,
+  width = 1,
+  height = 1,
+  solid = false
+) {
+  const prop = {
+    kind,
+    x,
+    y,
+    w: width,
+    h: height
+  };
+
+  chunk.props.push(prop);
+
+  if (solid) {
+    for (let py = y; py < y + height; py++) {
+      for (let px = x; px < x + width; px++) {
+        chunk.solid.add(key(px, py));
+      }
+    }
+  }
+
+  return prop;
+}
+
+function rect(x, y, width, height) {
+  return {
+    x,
+    y,
+    w: width,
+    h: height
+  };
+}
+
+/* BUILDINGS */
+
+function addBuilding(chunk, buildingRect, type, id) {
+  const wallType =
+    type === "house"
+      ? "brick"
+      : type === "apartment"
+        ? "concrete"
+        : type === "deli"
+          ? "storeWall"
+          : "policeWall";
+
+  const building = {
+    ...buildingRect,
+    type,
+    id,
+    floor: COLORS[type],
+    wallType,
+    doors: []
+  };
+
+  chunk.buildings.push(building);
+
+  for (
+    let x = buildingRect.x;
+    x < buildingRect.x + buildingRect.w;
+    x++
+  ) {
+    wall(chunk, x, buildingRect.y, wallType);
+    wall(
+      chunk,
+      x,
+      buildingRect.y + buildingRect.h - 1,
+      wallType
+    );
+  }
+
+  for (
+    let y = buildingRect.y;
+    y < buildingRect.y + buildingRect.h;
+    y++
+  ) {
+    wall(chunk, buildingRect.x, y, wallType);
+    wall(
+      chunk,
+      buildingRect.x + buildingRect.w - 1,
+      y,
+      wallType
+    );
+  }
+
+  const centerX = buildingRect.x + buildingRect.w / 2;
+  const centerY = buildingRect.y + buildingRect.h / 2;
+
+  const distances = {
+    top: centerY - BUILD_MIN,
+    left: centerX - BUILD_MIN,
+    right: BUILD_MAX - centerX,
+    bottom: BUILD_MAX - centerY
+  };
+
+  const side = Object.keys(distances)
+    .sort((a, b) => distances[a] - distances[b])[0];
+
+  let doorX;
+  let doorY;
+
+  if (side === "top" || side === "bottom") {
+    doorX = buildingRect.x + Math.floor(buildingRect.w / 2);
+    doorY =
+      side === "top"
+        ? buildingRect.y
+        : buildingRect.y + buildingRect.h - 1;
+  } else {
+    doorX =
+      side === "left"
+        ? buildingRect.x
+        : buildingRect.x + buildingRect.w - 1;
+
+    doorY = buildingRect.y + Math.floor(buildingRect.h / 2);
+  }
+
+  clearWall(chunk, doorX, doorY);
+
+  building.doors.push({
+    x: doorX,
+    y: doorY,
+    side
+  });
+
+  if (type === "house") {
+    homeInterior(chunk, buildingRect, wallType);
+  }
+
+  if (type === "apartment") {
+    apartmentInterior(chunk, buildingRect, wallType);
+  }
+
+  if (type === "deli") {
+    deliInterior(chunk, buildingRect, wallType);
+  }
+
+  if (type === "police") {
+    policeInterior(chunk, buildingRect, wallType);
+  }
+
+  return building;
+}
+
+/* HOUSE INTERIOR */
+
+function homeInterior(chunk, building, wallType) {
+  const middleX =
+    building.x + Math.floor(building.w * 0.55);
+
+  const middleY =
+    building.y + Math.floor(building.h * 0.52);
+
+  if (building.w >= 10) {
+    lineV(
+      chunk,
+      middleX,
+      building.y + 1,
+      building.y + building.h - 2,
+      middleY - 1,
+      wallType
+    );
+  }
+
+  lineH(
+    chunk,
+    middleY,
+    building.x + 1,
+    Math.max(building.x + 1, middleX - 1),
+    building.x + 2,
+    wallType
+  );
+
+  addProp(
+    chunk,
+    "bed",
+    building.x + building.w - 3,
+    building.y + 2,
+    1,
+    2,
+    true
+  );
+
+  addProp(
+    chunk,
+    "sofa",
+    building.x + 2,
+    building.y + building.h - 3,
+    2,
+    1,
+    true
+  );
+
+  addProp(
+    chunk,
+    "table",
+    building.x + 2,
+    building.y + 2,
+    1,
+    1,
+    true
+  );
+}
+
+/* APARTMENT INTERIOR */
+
+function apartmentInterior(chunk, building, wallType) {
+  if (building.w < 12) {
+    homeInterior(chunk, building, wallType);
+    return;
+  }
+
+  const middleX =
+    building.x + Math.floor(building.w / 2);
+
+  const middleY =
+    building.y + Math.floor(building.h / 2);
+
+  lineV(
+    chunk,
+    middleX - 1,
+    building.y + 1,
+    building.y + building.h - 2,
+    building.y + Math.floor(building.h * 0.3),
+    wallType
+  );
+
+  lineV(
+    chunk,
+    middleX + 1,
+    building.y + 1,
+    building.y + building.h - 2,
+    building.y + Math.floor(building.h * 0.7),
+    wallType
+  );
+
+  lineH(
+    chunk,
+    middleY,
+    building.x + 1,
+    middleX - 2,
+    building.x + 2,
+    wallType
+  );
+
+  lineH(
+    chunk,
+    middleY,
+    middleX + 2,
+    building.x + building.w - 2,
+    building.x + building.w - 3,
+    wallType
+  );
+
+  const beds = [
+    [building.x + 2, building.y + 2],
+    [building.x + building.w - 3, building.y + 2],
+    [building.x + 2, building.y + building.h - 4],
+    [
+      building.x + building.w - 3,
+      building.y + building.h - 4
+    ]
+  ];
+
+  for (const [x, y] of beds) {
+    addProp(chunk, "bed", x, y, 1, 2, true);
+  }
+
+  addProp(
+    chunk,
+    "mail",
+    middleX,
+    building.y + 2
+  );
+}
+
+/* DELI INTERIOR */
+
+function deliInterior(chunk, building, wallType) {
+  const backRoomY =
+    building.y +
+    Math.max(5, Math.floor(building.h * 0.3));
+
+  lineH(
+    chunk,
+    backRoomY,
+    building.x + 1,
+    building.x + building.w - 2,
+    building.x + building.w - 3,
+    wallType
+  );
+
+  for (
+    let y = backRoomY + 3;
+    y < building.y + building.h - 3;
+    y += 4
+  ) {
+    for (
+      let x = building.x + 3;
+      x < building.x + building.w - 3;
+      x += 4
+    ) {
+      addProp(chunk, "shelf", x, y, 1, 3, true);
+    }
+  }
+
+  addProp(
+    chunk,
+    "counter",
+    building.x + 2,
+    building.y + building.h - 3,
+    3,
+    1,
+    true
+  );
+
+  addProp(
+    chunk,
+    "cooler",
+    building.x + building.w - 3,
+    building.y + building.h - 4,
+    1,
+    2,
+    true
+  );
+}
+
+/* POLICE STATION INTERIOR */
+
+function policeInterior(chunk, building, wallType) {
+  const splitY = building.y + 8;
+  const splitX =
+    building.x + Math.floor(building.w * 0.56);
+
+  lineH(
+    chunk,
+    splitY,
+    building.x + 1,
+    building.x + building.w - 2,
+    splitX,
+    wallType
+  );
+
+  lineV(
+    chunk,
+    splitX,
+    splitY + 1,
+    building.y + building.h - 2,
+    splitY + 2,
+    wallType
+  );
+
+  const cellY = splitY + 8;
+
+  lineH(
+    chunk,
+    cellY,
+    splitX + 1,
+    building.x + building.w - 2,
+    splitX + 2,
+    wallType
+  );
+
+  addProp(
+    chunk,
+    "desk",
+    building.x + 3,
+    building.y + 3,
+    3,
+    1,
+    true
+  );
+
+  addProp(
+    chunk,
+    "desk",
+    building.x + 8,
+    building.y + 3,
+    3,
+    1,
+    true
+  );
+
+  addProp(
+    chunk,
+    "locker",
+    building.x + 3,
+    building.y + building.h - 3,
+    1,
+    1,
+    true
+  );
+
+  addProp(
+    chunk,
+    "bars",
+    building.x + building.w - 3,
+    splitY + 3,
+    1,
+    4,
+    true
+  );
+}
+
+/* RESIDENTIAL BLOCK */
+
+function houseBlock(chunk) {
+  const columns =
+    density(chunk.cx, chunk.cy) < 0.34 ? 4 : 3;
+
+  const rows = 2;
+  const totalWidth = BUILD_MAX - BUILD_MIN;
+
+  const lotWidth = Math.floor(totalWidth / columns);
+  const lotHeight = Math.floor(totalWidth / rows);
+
+  let id = 0;
+
+  for (let gridX = 0; gridX < columns; gridX++) {
+    for (let gridY = 0; gridY < rows; gridY++) {
+      const lot = rect(
+        BUILD_MIN + gridX * lotWidth,
+        BUILD_MIN + gridY * lotHeight,
+        gridX === columns - 1
+          ? totalWidth - lotWidth * gridX
+          : lotWidth,
+        gridY === rows - 1
+          ? totalWidth - lotHeight * gridY
+          : lotHeight
+      );
+
+      chunk.lots.push({
+        ...lot,
+        ground: "grass"
+      });
+
+      const buildingWidth = lot.w - 4;
+      const buildingHeight = 14;
+      const buildingX = lot.x + 2;
+
+      const buildingY =
+        gridY === 0
+          ? lot.y + 2
+          : lot.y + lot.h - buildingHeight - 2;
+
+      addBuilding(
+        chunk,
+        rect(
+          buildingX,
+          buildingY,
+          buildingWidth,
+          buildingHeight
+        ),
+        "house",
+        ++id
+      );
+
+      if (rand(chunk.cx, chunk.cy, 100 + id) > 0.62) {
+        addProp(
+          chunk,
+          "tree",
+          lot.x + lot.w - 3,
+          gridY === 0
+            ? lot.y + lot.h - 3
+            : lot.y + 2,
+          1,
+          1,
+          true
+        );
+      }
+    }
+  }
+}
+
+/* APARTMENT BLOCK */
+
+function apartmentBlock(chunk) {
+  const totalWidth = BUILD_MAX - BUILD_MIN;
+  const lotWidth = Math.floor(totalWidth / 2);
+  const lotHeight = Math.floor(totalWidth / 2);
+
+  let id = 0;
+
+  for (let gridX = 0; gridX < 2; gridX++) {
+    for (let gridY = 0; gridY < 2; gridY++) {
+      const lot = rect(
+        BUILD_MIN + gridX * lotWidth,
+        BUILD_MIN + gridY * lotHeight,
+        gridX === 1
+          ? totalWidth - lotWidth
+          : lotWidth,
+        gridY === 1
+          ? totalWidth - lotHeight
+          : lotHeight
+      );
+
+      chunk.lots.push({
+        ...lot,
+        ground: "lot"
+      });
+
+      addBuilding(
+        chunk,
+        rect(
+          lot.x + 2,
+          lot.y + 2,
+          lot.w - 4,
+          lot.h - 4
+        ),
+        "apartment",
+        ++id
+      );
+    }
+  }
+
+  addProp(
+    chunk,
+    "dumpster",
+    BUILD_MAX - 3,
+    BUILD_MAX - 3,
+    1,
+    1,
+    true
+  );
+}
+
+/* COMMERCIAL BLOCK */
+
+function mixedBlock(chunk) {
+  const columns = 3;
+  const rows = 2;
+
+  const totalWidth = BUILD_MAX - BUILD_MIN;
+  const lotWidth = Math.floor(totalWidth / columns);
+  const lotHeight = Math.floor(totalWidth / rows);
+
+  const deliIndex =
+    hash(chunk.cx, chunk.cy, 200) % 6;
+
+  const secondDeli =
+    rand(chunk.cx, chunk.cy, 201) > 0.68
+      ? (deliIndex + 3) % 6
+      : -1;
+
+  let id = 0;
+
+  for (let gridX = 0; gridX < columns; gridX++) {
+    for (let gridY = 0; gridY < rows; gridY++) {
+      const index = id++;
+
+      const lot = rect(
+        BUILD_MIN + gridX * lotWidth,
+        BUILD_MIN + gridY * lotHeight,
+        gridX === columns - 1
+          ? totalWidth - lotWidth * gridX
+          : lotWidth,
+        gridY === rows - 1
+          ? totalWidth - lotHeight * gridY
+          : lotHeight
+      );
+
+      const type =
+        index === deliIndex || index === secondDeli
+          ? "deli"
+          : rand(chunk.cx, chunk.cy, 220 + index) > 0.22
+            ? "apartment"
+            : "house";
+
+      chunk.lots.push({
+        ...lot,
+        ground: type === "house" ? "grass" : "lot"
+      });
+
+      const inset =
+        type === "deli"
+          ? 3
+          : type === "house"
+            ? 2
+            : 1;
+
+      const buildingWidth = lot.w - inset * 2;
+
+      const buildingHeight =
+        type === "house"
+          ? 14
+          : lot.h - inset * 2;
+
+      const buildingY =
+        type === "house"
+          ? gridY === 0
+            ? lot.y + 2
+            : lot.y + lot.h - buildingHeight - 2
+          : lot.y + inset;
+
+      addBuilding(
+        chunk,
+        rect(
+          lot.x + inset,
+          buildingY,
+          buildingWidth,
+          buildingHeight
+        ),
+        type,
+        id
+      );
+    }
+  }
+}
+
+/* POLICE BLOCK */
+
+function policeBlock(chunk) {
+  const totalWidth = BUILD_MAX - BUILD_MIN;
+
+  chunk.lots.push({
+    x: BUILD_MIN,
+    y: BUILD_MIN,
+    w: totalWidth,
+    h: totalWidth,
+    ground: "parking"
+  });
+
+  addBuilding(
+    chunk,
+    rect(
+      BUILD_MIN + 6,
+      BUILD_MIN + 3,
+      40,
+      24
+    ),
+    "police",
+    1
+  );
+
+  const parkingY = BUILD_MIN + 40;
+
+  for (
+    let x = BUILD_MIN + 6;
+    x < BUILD_MAX - 4;
+    x += 6
+  ) {
+    if (rand(chunk.cx, chunk.cy, 300 + x) > 0.25) {
+      addProp(
+        chunk,
+        "policeCar",
+        x,
+        parkingY,
+        2,
+        4,
+        true
+      );
+    }
+  }
+}
+
+/* CHUNK GENERATOR */
+
+function generateChunk(cx, cy) {
+  const chunk = {
+    cx,
+    cy,
+    walls: new Map(),
+    solid: new Set(),
+    buildings: [],
+    lots: [],
+    props: [],
+    district: "residential"
+  };
+
+  if (isPolice(cx, cy)) {
+    chunk.district = "police precinct";
+    policeBlock(chunk);
+  } else if (isCommercial(cx, cy)) {
+    chunk.district = "mixed use";
+    mixedBlock(chunk);
+  } else if (density(cx, cy) > 0.56) {
+    chunk.district = "apartment district";
+    apartmentBlock(chunk);
+  } else {
+    houseBlock(chunk);
+  }
+
+  return chunk;
+}
+
+function getChunk(cx, cy) {
+  const chunkKey = key(cx, cy);
+
+  if (!chunks.has(chunkKey)) {
+    chunks.set(chunkKey, generateChunk(cx, cy));
+  }
+
+  return chunks.get(chunkKey);
+}
+
+/* PLAYER AND COLLISION */
+
+const player = {
+  x: ROAD * 0.5 * PX,
+  y: ROAD * 0.5 * PX,
+  w: 0.65 * PX,
+  h: 0.85 * PX,
+  stamina: 100,
+  facing: "down",
+  moving: false
+};
+
+const camera = {
+  x: player.x,
+  y: player.y
+};
+
+function solidTile(tileX, tileY) {
+  const chunkX = Math.floor(tileX / BLOCK);
+  const chunkY = Math.floor(tileY / BLOCK);
+
+  const localX = mod(tileX, BLOCK);
+  const localY = mod(tileY, BLOCK);
+
+  return getChunk(chunkX, chunkY)
+    .solid
+    .has(key(localX, localY));
+}
+
+function collides(x, y) {
+  const left =
+    Math.floor((x - player.w / 2) / PX);
+
+  const right =
+    Math.floor((x + player.w / 2 - 0.01) / PX);
+
+  const top =
+    Math.floor((y - player.h / 2) / PX);
+
+  const bottom =
+    Math.floor((y + player.h / 2 - 0.01) / PX);
+
+  for (let tileY = top; tileY <= bottom; tileY++) {
+    for (let tileX = left; tileX <= right; tileX++) {
+      if (solidTile(tileX, tileY)) return true;
+    }
+  }
+
+  return false;
+}
+
+const keys = {};
+
+let touchX = 0;
+let touchY = 0;
+let touchRun = false;
+
+let started = false;
+let playing = false;
+
+addEventListener("keydown", event => {
+  if (event.key === "Escape" && started) {
+    openMenu();
+    return;
+  }
+
+  if (playing) {
+    keys[event.key.toLowerCase()] = true;
+  }
+});
+
+addEventListener("keyup", event => {
+  keys[event.key.toLowerCase()] = false;
+});
+
+addEventListener("blur", () => {
+  for (const keyName in keys) {
+    keys[keyName] = false;
+  }
+
+  touchX = 0;
+  touchY = 0;
+  touchRun = false;
+});
+
+function update(deltaTime) {
+  let movementX =
+    (keys.d || keys.arrowright ? 1 : 0) -
+    (keys.a || keys.arrowleft ? 1 : 0) +
+    touchX;
+
+  let movementY =
+    (keys.s || keys.arrowdown ? 1 : 0) -
+    (keys.w || keys.arrowup ? 1 : 0) +
+    touchY;
+
+  const magnitude =
+    Math.hypot(movementX, movementY);
+
+  if (magnitude > 1) {
+    movementX /= magnitude;
+    movementY /= magnitude;
+  }
+
+  const wantsToRun =
+    (keys.shift || touchRun) &&
+    player.stamina > 0 &&
+    magnitude > 0.05;
+
+  const speed =
+    wantsToRun ? SPRINT : WALK;
+
+  player.moving = magnitude > 0.05;
+
+  if (wantsToRun) {
+    player.stamina =
+      Math.max(
+        0,
+        player.stamina - 24 * deltaTime
+      );
+  } else {
+    player.stamina =
+      Math.min(
+        100,
+        player.stamina + 12 * deltaTime
+      );
+  }
+
+  if (Math.abs(movementX) > 0.05) {
+    player.facing =
+      movementX > 0 ? "right" : "left";
+  }
+
+  if (Math.abs(movementY) > Math.abs(movementX)) {
+    player.facing =
+      movementY > 0 ? "down" : "up";
+  }
+
+  const nextX =
+    player.x + movementX * speed * deltaTime;
+
+  const nextY =
+    player.y + movementY * speed * deltaTime;
+
+  if (!collides(nextX, player.y)) {
+    player.x = nextX;
+  }
+
+  if (!collides(player.x, nextY)) {
+    player.y = nextY;
+  }
+
+  camera.x +=
+    (player.x - camera.x) *
+    Math.min(1, deltaTime * 9);
+
+  camera.y +=
+    (player.y - camera.y) *
+    Math.min(1, deltaTime * 9);
+
+  document.querySelector("#stamina").style.width =
+    player.stamina + "%";
+
+  const chunkX =
+    Math.floor(player.x / CHUNK_PX);
+
+  const chunkY =
+    Math.floor(player.y / CHUNK_PX);
+
+  document.querySelector("#area").textContent =
+    "NEW DAWN CITY • " +
+    getChunk(chunkX, chunkY).district.toUpperCase();
+
+  pruneChunks(chunkX, chunkY);
+}
+
+function pruneChunks(centerX, centerY) {
+  if (chunks.size < 90) return;
+
+  for (const [chunkKey, chunk] of chunks) {
+    if (
+      Math.abs(chunk.cx - centerX) > 5 ||
+      Math.abs(chunk.cy - centerY) > 5
+    ) {
+      chunks.delete(chunkKey);
+    }
+  }
+}
+
+/* DRAWING */
+
+function screenX(worldX) {
+  return Math.round(worldX - camera.x + SW / 2);
+}
+
+function screenY(worldY) {
+  return Math.round(worldY - camera.y + SH / 2);
+}
+
+function fillWorld(x, y, width, height, color) {
+  ctx.fillStyle = color;
+
+  ctx.fillRect(
+    screenX(x),
+    screenY(y),
+    Math.ceil(width),
+    Math.ceil(height)
+  );
+}
+
+function drawBase(chunk) {
+  const originX = chunk.cx * CHUNK_PX;
+  const originY = chunk.cy * CHUNK_PX;
+
+  fillWorld(
+    originX,
+    originY,
+    CHUNK_PX,
+    CHUNK_PX,
+    COLORS.lot
+  );
+
+  fillWorld(
+    originX,
+    originY,
+    ROAD * PX,
+    CHUNK_PX,
+    COLORS.road
+  );
+
+  fillWorld(
+    originX,
+    originY,
+    CHUNK_PX,
+    ROAD * PX,
+    COLORS.road
+  );
+
+  fillWorld(
+    originX + ROAD * PX,
+    originY + ROAD * PX,
+    2 * PX,
+    (BLOCK - ROAD) * PX,
+    COLORS.sidewalk
+  );
+
+  fillWorld(
+    originX + ROAD * PX,
+    originY + ROAD * PX,
+    (BLOCK - ROAD) * PX,
+    2 * PX,
+    COLORS.sidewalk
+  );
+
+  fillWorld(
+    originX + (BLOCK - 2) * PX,
+    originY + ROAD * PX,
+    2 * PX,
+    (BLOCK - ROAD) * PX,
+    COLORS.sidewalk
+  );
+
+  fillWorld(
+    originX + ROAD * PX,
+    originY + (BLOCK - 2) * PX,
+    (BLOCK - ROAD) * PX,
+    2 * PX,
+    COLORS.sidewalk
+  );
+
+  ctx.fillStyle = COLORS.line;
+
+  for (
+    let y = ROAD + 2;
+    y < BLOCK;
+    y += 4
+  ) {
+    ctx.fillRect(
+      screenX(originX + 3.94 * PX),
+      screenY(originY + y * PX),
+      2,
+      2 * PX
+    );
+  }
+
+  for (
+    let x = ROAD + 2;
+    x < BLOCK;
+    x += 4
+  ) {
+    ctx.fillRect(
+      screenX(originX + x * PX),
+      screenY(originY + 3.94 * PX),
+      2 * PX,
+      2
+    );
+  }
+
+  ctx.fillStyle = "#b7b6ad";
+
+  for (let index = 0; index < ROAD; index += 2) {
+    ctx.fillRect(
+      screenX(originX + index * PX) + 3,
+      screenY(originY + (ROAD - 1) * PX),
+      PX - 6,
+      5
+    );
+
+    ctx.fillRect(
+      screenX(originX + (ROAD - 1) * PX),
+      screenY(originY + index * PX) + 3,
+      5,
+      PX - 6
+    );
+  }
+}
+
+function drawFeatures(chunk) {
+  const originX = chunk.cx * CHUNK_PX;
+  const originY = chunk.cy * CHUNK_PX;
+
+  for (const lot of chunk.lots) {
+    fillWorld(
+      originX + lot.x * PX,
+      originY + lot.y * PX,
+      lot.w * PX,
+      lot.h * PX,
+      COLORS[lot.ground]
+    );
+  }
+
+  for (const building of chunk.buildings) {
+    fillWorld(
+      originX + (building.x + 1) * PX,
+      originY + (building.y + 1) * PX,
+      (building.w - 2) * PX,
+      (building.h - 2) * PX,
+      building.floor
+    );
+
+    ctx.strokeStyle = "#00000022";
+
+    ctx.strokeRect(
+      screenX(originX + building.x * PX),
+      screenY(originY + building.y * PX),
+      building.w * PX,
+      building.h * PX
+    );
+  }
+
+  for (const [wallKey, type] of chunk.walls) {
+    const [x, y] =
+      wallKey.split(",").map(Number);
+
+    fillWorld(
+      originX + x * PX,
+      originY + y * PX,
+      PX + 1,
+      PX + 1,
+      COLORS[type]
+    );
+  }
+
+  for (const building of chunk.buildings) {
+    for (const door of building.doors) {
+      ctx.fillStyle = COLORS.door;
+
+      const x =
+        screenX(originX + door.x * PX);
+
+      const y =
+        screenY(originY + door.y * PX);
+
+      if (
+        door.side === "top" ||
+        door.side === "bottom"
+      ) {
+        ctx.fillRect(
+          x + 2,
+          y + PX / 2 - 2,
+          PX - 4,
+          4
+        );
+      } else {
+        ctx.fillRect(
+          x + PX / 2 - 2,
+          y + 2,
+          4,
+          PX - 4
+        );
+      }
+
+      if (building.type !== "house") {
+        ctx.fillStyle =
+          building.type === "police"
+            ? "#d7e5ed"
+            : "#efe4bf";
+
+        ctx.font = "bold 7px Courier New";
+        ctx.textAlign = "center";
+
+        const label =
+          building.type === "police"
+            ? "NDPD"
+            : building.type === "deli"
+              ? "DELI"
+              : "APT";
+
+        ctx.fillText(
+          label,
+          x + PX / 2,
+          y + PX / 2 + 3
+        );
+      }
+    }
+  }
+
+  for (const prop of chunk.props) {
+    drawProp(originX, originY, prop);
+  }
+}
+
+function drawProp(originX, originY, prop) {
+  const x =
+    screenX(originX + prop.x * PX);
+
+  const y =
+    screenY(originY + prop.y * PX);
+
+  const width = prop.w * PX;
+  const height = prop.h * PX;
+
+  if (prop.kind === "tree") {
+    ctx.fillStyle = "#3b2c1e";
+    ctx.fillRect(x + 7, y + 7, 5, 15);
+
+    ctx.fillStyle = "#243f24";
+    ctx.beginPath();
+    ctx.arc(
+      x + PX / 2,
+      y + 2,
+      PX * 1.25,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.fillStyle = "#375c38";
+    ctx.beginPath();
+    ctx.arc(
+      x + 3,
+      y - 4,
+      PX * 0.75,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    return;
+  }
+
+  if (prop.kind === "policeCar") {
+    drawCar(x, y, width, height);
+    return;
+  }
+
+  const colors = {
+    bed: "#776b5c",
+    sofa: "#5c5149",
+    table: "#624d3a",
+    mail: "#474b49",
+    shelf: "#5b4938",
+    counter: "#514334",
+    cooler: "#647a7d",
+    desk: "#554739",
+    locker: "#4c5658",
+    bars: "#747b7c",
+    dumpster: "#34413a"
+  };
+
+  ctx.fillStyle =
+    colors[prop.kind] || "#57504a";
+
+  ctx.fillRect(
+    x + 3,
+    y + 3,
+    Math.max(3, width - 6),
+    Math.max(3, height - 6)
+  );
+
+  ctx.strokeStyle = "#17191a";
+
+  ctx.strokeRect(
+    x + 3,
+    y + 3,
+    Math.max(3, width - 6),
+    Math.max(3, height - 6)
+  );
+}
+
+function drawCar(x, y, width, height) {
+  ctx.fillStyle = "#0008";
+
+  ctx.fillRect(
+    x + 4,
+    y + 5,
+    width - 2,
+    height - 2
+  );
+
+  ctx.fillStyle = "#d7dad5";
+
+  ctx.fillRect(
+    x + 2,
+    y + 2,
+    width - 4,
+    height - 4
+  );
+
+  ctx.fillStyle = "#202c31";
+
+  ctx.fillRect(
+    x + 6,
+    y + height * 0.2,
+    width - 12,
+    height * 0.22
+  );
+
+  ctx.fillRect(
+    x + 6,
+    y + height * 0.56,
+    width - 12,
+    height * 0.2
+  );
+
+  ctx.fillStyle = "#111";
+
+  for (const wheelY of [10, height - 19]) {
+    ctx.fillRect(x, y + wheelY, 4, 9);
+    ctx.fillRect(
+      x + width - 4,
+      y + wheelY,
+      4,
+      9
+    );
+  }
+
+  ctx.fillStyle = "#294567";
+
+  ctx.fillRect(
+    x + width / 2 - 3,
+    y + 3,
+    6,
+    height - 6
+  );
+
+  ctx.fillStyle = "#b84641";
+
+  ctx.fillRect(
+    x + width / 2 - 5,
+    y + height / 2 - 2,
+    5,
+    4
+  );
+
+  ctx.fillStyle = "#3d6da7";
+
+  ctx.fillRect(
+    x + width / 2,
+    y + height / 2 - 2,
+    5,
+    4
+  );
+}
+
+function drawPlayer() {
+  const x = Math.floor(SW / 2);
+  const y = Math.floor(SH / 2);
+
+  const bob =
+    player.moving
+      ? Math.round(
+          Math.sin(performance.now() * 0.018)
+        )
+      : 0;
+
+  ctx.fillStyle = "#0007";
+  ctx.beginPath();
+  ctx.ellipse(
+    x,
+    y + 10,
+    8,
+    4,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  ctx.fillStyle = "#292c30";
+  ctx.fillRect(x - 6, y + 2 + bob, 4, 10);
+  ctx.fillRect(x + 2, y + 2 - bob, 4, 10);
+
+  ctx.fillStyle = "#48545a";
+  ctx.fillRect(x - 7, y - 9, 14, 13);
+
+  ctx.fillStyle = "#9b7155";
+  ctx.fillRect(x - 10, y - 7, 3, 10);
+  ctx.fillRect(x + 7, y - 7, 3, 10);
+
+  ctx.fillStyle = "#a77b5a";
+  ctx.fillRect(x - 5, y - 17, 10, 9);
+
+  ctx.fillStyle = "#201b18";
+  ctx.fillRect(x - 5, y - 19, 10, 4);
+}
+
+function draw() {
+  ctx.fillStyle = "#090b0c";
+  ctx.fillRect(0, 0, SW, SH);
+
+  const left =
+    Math.floor(
+      (camera.x - SW / 2) / CHUNK_PX
+    ) - 1;
+
+  const right =
+    Math.floor(
+      (camera.x + SW / 2) / CHUNK_PX
+    ) + 1;
+
+  const top =
+    Math.floor(
+      (camera.y - SH / 2) / CHUNK_PX
+    ) - 1;
+
+  const bottom =
+    Math.floor(
+      (camera.y + SH / 2) / CHUNK_PX
+    ) + 1;
+
+  const visibleChunks = [];
+
+  for (let cy = top; cy <= bottom; cy++) {
+    for (let cx = left; cx <= right; cx++) {
+      visibleChunks.push(getChunk(cx, cy));
+    }
+  }
+
+  for (const chunk of visibleChunks) {
+    drawBase(chunk);
+  }
+
+  for (const chunk of visibleChunks) {
+    drawFeatures(chunk);
+  }
+
+  drawPlayer();
+}
+
+/* MAIN MENU */
+
+const menu =
+  document.querySelector("#menu");
+
+const seedInput =
+  document.querySelector("#seed");
+
+const continueButton =
+  document.querySelector("#continue");
+
+function resetPlayer() {
+  player.x = ROAD * 0.5 * PX;
+  player.y = ROAD * 0.5 * PX;
+  player.stamina = 100;
+
+  camera.x = player.x;
+  camera.y = player.y;
+
+  for (const keyName in keys) {
+    keys[keyName] = false;
+  }
+}
+
+function generateCity() {
+  seedLabel =
+    seedInput.value.trim() || createRandomSeed();
+
+  seedInput.value = seedLabel;
+  worldSeed = seedNumber(seedLabel);
+
+  chunks.clear();
+  resetPlayer();
+
+  started = true;
+  playing = true;
+
+  menu.classList.add("hidden");
+  document.body.classList.add("playing");
+
+  continueButton.hidden = false;
+
+  document.querySelector("#seedView").textContent =
+    "SEED • " + seedLabel;
+
+  try {
+    localStorage.setItem(
+      "wnd-seed",
+      seedLabel
+    );
+
+    const url = new URL(location.href);
+    url.searchParams.set("seed", seedLabel);
+
+    history.replaceState(null, "", url);
+  } catch {
+    // The seed still works when browser storage is unavailable.
+  }
+}
+
+function openMenu() {
+  if (!started) return;
+
+  playing = false;
+
+  menu.classList.remove("hidden");
+  document.body.classList.remove("playing");
+}
+
+function resumeGame() {
+  if (!started) return;
+
+  playing = true;
+
+  menu.classList.add("hidden");
+  document.body.classList.add("playing");
+
+  previousTime = performance.now();
+}
+
+function createRandomSeed() {
+  const values = new Uint32Array(1);
+
+  if (globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(values);
+  } else {
+    values[0] = Date.now();
+  }
+
+  return (
+    "NDC-" +
+    values[0]
+      .toString(36)
+      .toUpperCase()
+      .padStart(7, "0")
+  );
+}
+
+document.querySelector("#start").onclick =
+  generateCity;
+
+document.querySelector("#random").onclick = () => {
+  seedInput.value = createRandomSeed();
+  seedInput.focus();
+  seedInput.select();
+};
+
+document.querySelector("#menuBtn").onclick =
+  openMenu;
+
+continueButton.onclick = resumeGame;
+
+seedInput.onkeydown = event => {
+  event.stopPropagation();
+
+  if (event.key === "Enter") {
+    generateCity();
+  }
+};
+
+try {
+  seedInput.value =
+    new URL(location.href).searchParams.get("seed") ||
+    localStorage.getItem("wnd-seed") ||
+    seedLabel;
+} catch {
+  seedInput.value = seedLabel;
+}
+
+seedInput.focus();
+seedInput.select();
+
+/* MOBILE CONTROLS */
+
+const joystick =
+  document.querySelector("#joy");
+
+const joystickStick =
+  document.querySelector("#stick");
+
+const runButton =
+  document.querySelector("#run");
+
+let joystickPointer = null;
+
+function moveJoystick(event) {
+  const bounds =
+    joystick.getBoundingClientRect();
+
+  const x =
+    event.clientX -
+    (bounds.left + bounds.width / 2);
+
+  const y =
+    event.clientY -
+    (bounds.top + bounds.height / 2);
+
+  const magnitude = Math.hypot(x, y);
+  const limit = 38;
+
+  const scale =
+    magnitude > limit
+      ? limit / magnitude
+      : 1;
+
+  touchX = x * scale / limit;
+  touchY = y * scale / limit;
+
+  joystickStick.style.transform =
+    `translate(${x * scale}px,${y * scale}px)`;
+}
+
+joystick.addEventListener(
+  "pointerdown",
+  event => {
+    joystickPointer = event.pointerId;
+
+    joystick.setPointerCapture(
+      event.pointerId
+    );
+
+    moveJoystick(event);
+  }
+);
+
+joystick.addEventListener(
+  "pointermove",
+  event => {
+    if (event.pointerId === joystickPointer) {
+      moveJoystick(event);
+    }
+  }
+);
+
+function stopJoystick(event) {
+  if (
+    joystickPointer !== null &&
+    (!event || event.pointerId === joystickPointer)
+  ) {
+    joystickPointer = null;
+    touchX = 0;
+    touchY = 0;
+
+    joystickStick.style.transform = "";
+  }
+}
+
+joystick.addEventListener(
+  "pointerup",
+  stopJoystick
+);
+
+joystick.addEventListener(
+  "pointercancel",
+  stopJoystick
+);
+
+runButton.addEventListener(
+  "pointerdown",
+  event => {
+    touchRun = true;
+
+    runButton.setPointerCapture(
+      event.pointerId
+    );
+  }
+);
+
+runButton.addEventListener(
+  "pointerup",
+  () => touchRun = false
+);
+
+runButton.addEventListener(
+  "pointercancel",
+  () => touchRun = false
+);
+
+/* GAME LOOP */
+
+let previousTime = performance.now();
+
+function gameLoop(time) {
+  const deltaTime =
+    Math.min(
+      0.05,
+      (time - previousTime) / 1000
+    );
+
+  previousTime = time;
+
+  if (started) {
+    if (playing) {
+      update(deltaTime);
+    }
+
+    draw();
+  } else {
+    ctx.fillStyle = "#090b0c";
+    ctx.fillRect(0, 0, SW, SH);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
