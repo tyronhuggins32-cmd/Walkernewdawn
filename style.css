@@ -1,0 +1,263 @@
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#090c0d;
+  color:#eee;
+  font-family:Arial,sans-serif;
+  touch-action:none
+}
+
+button,input{font:inherit}
+
+canvas{
+  display:block;
+  width:100%;
+  height:100%;
+  image-rendering:pixelated
+}
+
+#hud{
+  position:fixed;
+  left:14px;
+  top:12px;
+  z-index:5;
+  display:none;
+  padding:10px 12px;
+  border-left:3px solid #aaa66e;
+  background:#0b0e0fbd;
+  text-shadow:2px 2px #000;
+  pointer-events:none;
+  backdrop-filter:blur(4px)
+}
+
+#hud b{
+  font-size:16px;
+  letter-spacing:1.2px
+}
+
+#area,#seedView,#renderView{
+  margin-top:4px;
+  font-size:9px;
+  color:#aaa99d
+}
+
+#staminaBox{
+  width:150px;
+  height:9px;
+  margin-top:8px;
+  border:2px solid #090a0b;
+  background:#25282a
+}
+
+#stamina{
+  height:100%;
+  width:100%;
+  background:#aaa66e
+}
+
+#menuBtn{
+  display:none;
+  position:fixed;
+  right:14px;
+  top:14px;
+  z-index:8;
+  padding:10px 13px;
+  border:1px solid #55584f;
+  background:#111615e8;
+  color:#ddd9c7;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.4px
+}
+
+body.playing #hud,
+body.playing #menuBtn{
+  display:block
+}
+
+#menu{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:radial-gradient(circle at 50% 34%,#303832 0,#0b0f10 48%,#040506 100%)
+}
+
+#menu.hidden{display:none}
+
+.panel{
+  width:min(490px,100%);
+  padding:34px;
+  border:1px solid #55584d;
+  border-top:3px solid #aaa66e;
+  background:#141819f7;
+  box-shadow:0 25px 90px #000;
+  color:#ecebdd
+}
+
+.kicker{
+  margin:0 0 8px;
+  color:#aaa66e;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:3px
+}
+
+.panel h1{
+  margin:0;
+  font-family:Impact,"Arial Narrow",sans-serif;
+  font-size:clamp(44px,12vw,68px);
+  font-weight:400;
+  line-height:.88;
+  text-transform:uppercase;
+  text-shadow:4px 5px #080a0b
+}
+
+.sub{
+  margin:16px 0 25px;
+  color:#a9aaa2;
+  font-size:12px;
+  line-height:1.55
+}
+
+.panel label{
+  display:block;
+  margin-bottom:7px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.5px
+}
+
+.seedRow{
+  display:grid;
+  grid-template-columns:1fr 48px;
+  gap:8px
+}
+
+.seedRow input{
+  min-width:0;
+  padding:13px;
+  border:1px solid #4d5049;
+  outline:0;
+  background:#080a0b;
+  color:#f2efdf;
+  font:16px "Courier New",monospace
+}
+
+.seedRow input:focus{border-color:#b2ad73}
+
+.seedRow button{
+  border:1px solid #4d5049;
+  background:#252a27;
+  color:#ddd8c4;
+  font-size:21px
+}
+
+.actions{
+  display:grid;
+  gap:8px;
+  margin-top:13px
+}
+
+.actions button{
+  min-height:48px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:2px
+}
+
+.start{
+  border:1px solid #cbc58b;
+  background:#a9a36b;
+  color:#101211
+}
+
+.continue{
+  border:1px solid #50534d;
+  background:transparent;
+  color:#ddd
+}
+
+.types{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-top:22px
+}
+
+.types span{
+  padding:9px 3px;
+  border:1px solid #ffffff18;
+  color:#a2a49b;
+  font-size:8px;
+  font-weight:900;
+  text-align:center;
+  text-transform:uppercase
+}
+
+.note{
+  margin:14px 0 0;
+  color:#747870;
+  font-size:9px;
+  line-height:1.5;
+  text-align:center
+}
+
+#joy{
+  display:none;
+  position:fixed;
+  left:20px;
+  bottom:22px;
+  z-index:7;
+  width:122px;
+  height:122px;
+  border:2px solid #ffffff2c;
+  border-radius:50%;
+  background:#ffffff0d
+}
+
+#stick{
+  position:absolute;
+  left:39px;
+  top:39px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:#ffffff40
+}
+
+#run{
+  display:none;
+  position:fixed;
+  right:25px;
+  bottom:34px;
+  z-index:7;
+  width:82px;
+  height:82px;
+  border:2px solid #ffffff2e;
+  border-radius:50%;
+  background:#ffffff12;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  align-items:center;
+  justify-content:center;
+  user-select:none
+}
+
+@media(pointer:coarse){
+  body.playing #joy{display:block}
+  body.playing #run{display:flex}
+}
+
+@media(max-width:520px){
+  .panel{padding:27px 21px}
+  .types{grid-template-columns:repeat(2,1fr)}
+  #renderView{display:none}
+}
