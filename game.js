@@ -45,15 +45,126 @@ const BUILDING_HEIGHT={
 
 const SPAWN_X=9;
 const SPAWN_Y=11;
-const camera={x:SPAWN_X,y:SPAWN_Y};
+const camera={
+  x:SPAWN_X,
+  y:SPAWN_Y
+};
+
+let cameraRotation=0;
+
+const CAMERA_VIEW_NAMES=[
+  "NORTH EAST",
+  "SOUTH EAST",
+  "SOUTH WEST",
+  "NORTH WEST"
+];
+
+function rotateView(dx,dy){
+  switch(cameraRotation&3){
+    case 1:
+      return{
+        x:-dy,
+        y:dx
+      };
+
+    case 2:
+      return{
+        x:-dx,
+        y:-dy
+      };
+
+    case 3:
+      return{
+        x:dy,
+        y:-dx
+      };
+
+    default:
+      return{
+        x:dx,
+        y:dy
+      };
+  }
+}
+
+function viewToWorld(vx,vy){
+  switch(cameraRotation&3){
+    case 1:
+      return{
+        x:vy,
+        y:-vx
+      };
+
+    case 2:
+      return{
+        x:-vx,
+        y:-vy
+      };
+
+    case 3:
+      return{
+        x:-vy,
+        y:vx
+      };
+
+    default:
+      return{
+        x:vx,
+        y:vy
+      };
+  }
+}
+
+function viewDepth(x,y){
+  const p=rotateView(x,y);
+  return p.x+p.y;
+}
+
+function frontDirections(){
+  switch(cameraRotation&3){
+    case 1:
+      return[
+        [1,0],
+        [0,-1]
+      ];
+
+    case 2:
+      return[
+        [-1,0],
+        [0,-1]
+      ];
+
+    case 3:
+      return[
+        [-1,0],
+        [0,1]
+      ];
+
+    default:
+      return[
+        [1,0],
+        [0,1]
+      ];
+  }
+}
 
 function project(x,y,z=0){
   const dx=x-camera.x;
   const dy=y-camera.y;
 
+  const view=rotateView(dx,dy);
+
   return{
-    x:SW/2+(dx-dy)*TILE_W/2,
-    y:SH*.47+(dx+dy)*TILE_H/2-z*Z_PX
+    x:
+      SW/2+
+      (view.x-view.y)*
+      TILE_W/2,
+
+    y:
+      SH*.47+
+      (view.x+view.y)*
+      TILE_H/2-
+      z*Z_PX
   };
 }
 
