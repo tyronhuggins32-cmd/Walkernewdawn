@@ -2,139 +2,127 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
 <meta
-name="viewport"
-content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
+    name="viewport"
+    content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
 >
-
 <title>Walker: New Dawn</title>
 
 <style>
-
-html,
-body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#0f1112;
-    font-family:Arial,sans-serif;
-    touch-action:none;
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #101214;
+    font-family: Arial, sans-serif;
+    touch-action: none;
 }
 
-canvas{
-    display:block;
-    width:100%;
-    height:100%;
-    image-rendering:pixelated;
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
 }
 
-#hud{
-    position:fixed;
-    left:16px;
-    top:14px;
-    color:#f1f1ea;
-    text-shadow:2px 2px #000;
-    pointer-events:none;
+#hud {
+    position: fixed;
+    left: 14px;
+    top: 12px;
+    color: #eeeeea;
+    text-shadow: 2px 2px #000;
+    pointer-events: none;
 }
 
-#title{
-    font-weight:800;
-    font-size:20px;
-    letter-spacing:.7px;
+#title {
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 1px;
 }
 
-#sub{
-    font-size:11px;
-    color:#aaa99d;
-    margin-top:3px;
+#area {
+    margin-top: 3px;
+    font-size: 11px;
+    color: #bbb8aa;
 }
 
-#staminaBox{
-    margin-top:10px;
-    width:170px;
-    height:11px;
-    border:2px solid #111;
-    background:#252729;
+#staminaOuter {
+    margin-top: 8px;
+    width: 155px;
+    height: 9px;
+    background: #202224;
+    border: 2px solid #090a0b;
 }
 
-#stamina{
-    width:100%;
-    height:100%;
-    background:#b6b281;
+#stamina {
+    width: 100%;
+    height: 100%;
+    background: #aaa770;
 }
 
-#district{
-    margin-top:6px;
-    font-size:10px;
-    color:#c9c6b5;
+#controls {
+    position: fixed;
+    left: 14px;
+    bottom: 12px;
+    color: #ccc8bb;
+    font-size: 11px;
+    pointer-events: none;
 }
 
-#controls{
-    position:fixed;
-    left:16px;
-    bottom:14px;
-    color:#ddd8c8;
-    font-size:11px;
-    pointer-events:none;
+#joystick {
+    display: none;
+    position: fixed;
+    left: 20px;
+    bottom: 24px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.06);
 }
 
-#joystickArea{
-    display:none;
-    position:fixed;
-    left:20px;
-    bottom:25px;
-    width:125px;
-    height:125px;
-    border-radius:50%;
-    background:rgba(255,255,255,.07);
-    border:2px solid rgba(255,255,255,.16);
+#stick {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    left: 39px;
+    top: 39px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.25);
 }
 
-#stick{
-    position:absolute;
-    left:39px;
-    top:39px;
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    background:rgba(255,255,255,.24);
+#sprint {
+    display: none;
+    position: fixed;
+    right: 26px;
+    bottom: 35px;
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.08);
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
 }
 
-#sprintButton{
-    display:none;
-    position:fixed;
-    right:28px;
-    bottom:38px;
-    width:85px;
-    height:85px;
-    border-radius:50%;
-    border:2px solid rgba(255,255,255,.25);
-    background:rgba(120,120,120,.22);
-    color:white;
-    align-items:center;
-    justify-content:center;
-    font-size:12px;
-    font-weight:bold;
-    user-select:none;
-}
-
-@media(pointer:coarse){
-
-    #joystickArea{
-        display:block;
+@media(pointer: coarse) {
+    #joystick {
+        display: block;
     }
 
-    #sprintButton{
-        display:flex;
+    #sprint {
+        display: flex;
     }
 
-    #controls{
-        display:none;
+    #controls {
+        display: none;
     }
 }
-
 </style>
 </head>
 
@@ -143,431 +131,320 @@ canvas{
 <canvas id="game"></canvas>
 
 <div id="hud">
+    <div id="title">WALKER: NEW DAWN</div>
+    <div id="area">NEW DAWN CITY</div>
 
-    <div id="title">
-        WALKER: NEW DAWN
-    </div>
-
-    <div id="sub">
-        NEW DAWN CITY • PROCEDURAL SURVIVAL MAP
-    </div>
-
-    <div id="staminaBox">
+    <div id="staminaOuter">
         <div id="stamina"></div>
     </div>
-
-    <div id="district">
-        CITY BLOCK
-    </div>
-
 </div>
 
 <div id="controls">
-WASD / ARROWS • SHIFT TO SPRINT • WALK THROUGH DOOR GAPS
+    WASD / ARROWS • SHIFT TO SPRINT
 </div>
 
-<div id="joystickArea">
+<div id="joystick">
     <div id="stick"></div>
 </div>
 
-<div id="sprintButton">
-SPRINT
-</div>
+<div id="sprint">SPRINT</div>
 
 <script>
-
 "use strict";
 
-/* =========================================================
+/* ============================================================
    CANVAS
-========================================================= */
+============================================================ */
 
-const canvas =
-document.getElementById("game");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-const ctx =
-canvas.getContext("2d");
+const staminaBar = document.getElementById("stamina");
+const areaLabel = document.getElementById("area");
 
-ctx.imageSmoothingEnabled=false;
+let screenWidth = innerWidth;
+let screenHeight = innerHeight;
 
-const staminaBar =
-document.getElementById("stamina");
+function resize() {
+    screenWidth = innerWidth;
+    screenHeight = innerHeight;
 
-const districtLabel =
-document.getElementById("district");
+    const dpr = Math.min(2, devicePixelRatio || 1);
 
-let screenWidth=innerWidth;
-let screenHeight=innerHeight;
+    canvas.width = Math.floor(screenWidth * dpr);
+    canvas.height = Math.floor(screenHeight * dpr);
 
-function resize(){
+    canvas.style.width = screenWidth + "px";
+    canvas.style.height = screenHeight + "px";
 
-    screenWidth=innerWidth;
-    screenHeight=innerHeight;
-
-    canvas.width=
-        screenWidth *
-        devicePixelRatio;
-
-    canvas.height=
-        screenHeight *
-        devicePixelRatio;
-
-    canvas.style.width=
-        screenWidth+"px";
-
-    canvas.style.height=
-        screenHeight+"px";
-
-    ctx.setTransform(
-        devicePixelRatio,
-        0,
-        0,
-        devicePixelRatio,
-        0,
-        0
-    );
-
-    ctx.imageSmoothingEnabled=false;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false;
 }
 
-addEventListener(
-    "resize",
-    resize
-);
-
+addEventListener("resize", resize);
 resize();
 
-/* =========================================================
+/* ============================================================
    WORLD SETTINGS
-========================================================= */
+============================================================ */
 
-const WORLD_SEED=1987;
-
-const CHUNK_SIZE=900;
+const TILE = 24;
 
 /*
-    Much wider than previous version.
-
-    Each major road now has enough visual room
-    for several marked lanes.
+    Each procedural chunk is one large city block
+    plus the streets bordering it.
 */
 
-const ROAD_WIDTH=176;
+const CHUNK_TILES = 48;
 
-const SIDEWALK_WIDTH=42;
+/*
+    10 tiles = 240px wide streets.
 
-const CURB_WIDTH=5;
+    Much wider than before.
+*/
 
-const VIEW_DISTANCE=2;
+const ROAD_TILES = 10;
 
-const WALL=8;
+const SIDEWALK_TILES = 2;
 
-const chunkCache=
-new Map();
+const CHUNK_WORLD_SIZE =
+    CHUNK_TILES * TILE;
 
-/* =========================================================
+const BUILD_MIN =
+    ROAD_TILES + SIDEWALK_TILES;
+
+const BUILD_MAX =
+    CHUNK_TILES - SIDEWALK_TILES;
+
+const WORLD_SEED = 781933;
+
+const chunks = new Map();
+
+/* ============================================================
+   COLORS
+============================================================ */
+
+const COLORS = {
+    road: "#1b1d1e",
+
+    sidewalkA: "#62615b",
+    sidewalkB: "#5b5a55",
+
+    emptyLot: "#343633",
+
+    grassA: "#263b27",
+    grassB: "#2b422b",
+
+    dirt: "#4b4337",
+    gravel: "#424340",
+
+    parking: "#292b2c",
+
+    floorHouse: "#716758",
+    floorApartment: "#68625a",
+    floorStore: "#666155",
+    floorClinic: "#626761",
+    floorOffice: "#5b6162",
+    floorWarehouse: "#515456",
+
+    wallBrick: "#463d36",
+    wallConcrete: "#454746",
+    wallLight: "#56544e",
+
+    window: "#729194",
+    door: "#76543b",
+
+    shelf: "#594837",
+    counter: "#514334",
+    bed: "#74685c",
+    sofa: "#5f554c",
+    table: "#604b39",
+    desk: "#544638",
+
+    fence: "#797b74"
+};
+
+/* ============================================================
    PLAYER
-========================================================= */
+============================================================ */
 
-const player={
+const player = {
+    x: TILE * (ROAD_TILES / 2),
+    y: TILE * (ROAD_TILES / 2),
 
-    x:0,
-    y:0,
+    width: 14,
+    height: 20,
 
-    width:18,
-    height:28,
+    walkSpeed: 155,
+    sprintSpeed: 235,
 
-    walkSpeed:180,
-    sprintSpeed:275,
+    stamina: 100,
+    maxStamina: 100,
 
-    stamina:100,
-    maxStamina:100,
-
-    direction:"down",
-
-    moving:false
+    facing: "down",
+    moving: false
 };
 
-const camera={
-
-    x:0,
-    y:0
+const camera = {
+    x: player.x,
+    y: player.y
 };
 
-/* =========================================================
-   KEYBOARD INPUT
-========================================================= */
+/* ============================================================
+   INPUT
+============================================================ */
 
-const keys={};
+const keys = {};
 
-addEventListener(
-    "keydown",
-    event=>{
-        keys[
-            event.key.toLowerCase()
-        ]=true;
-    }
-);
+addEventListener("keydown", event => {
+    keys[event.key.toLowerCase()] = true;
+});
 
-addEventListener(
-    "keyup",
-    event=>{
-        keys[
-            event.key.toLowerCase()
-        ]=false;
-    }
-);
+addEventListener("keyup", event => {
+    keys[event.key.toLowerCase()] = false;
+});
 
-/* =========================================================
-   MOBILE INPUT
-========================================================= */
+/* ============================================================
+   MOBILE CONTROLS
+============================================================ */
 
-const joystickArea=
-document.getElementById(
-    "joystickArea"
-);
+const joystick = document.getElementById("joystick");
+const stick = document.getElementById("stick");
+const sprintButton = document.getElementById("sprint");
 
-const stick=
-document.getElementById(
-    "stick"
-);
+let joystickPointer = null;
 
-const sprintButton=
-document.getElementById(
-    "sprintButton"
-);
+let joyX = 0;
+let joyY = 0;
 
-let joystickPointer=null;
+let sprintTouch = false;
 
-let joystickX=0;
-let joystickY=0;
+joystick.addEventListener("pointerdown", event => {
+    joystickPointer = event.pointerId;
 
-let sprintTouch=false;
+    joystick.setPointerCapture(
+        event.pointerId
+    );
 
-joystickArea.addEventListener(
-    "pointerdown",
-    event=>{
+    updateJoystick(event);
+});
 
-        joystickPointer=
-            event.pointerId;
-
-        joystickArea
-        .setPointerCapture(
-            event.pointerId
-        );
-
-        updateJoystick(
-            event
-        );
-    }
-);
-
-joystickArea.addEventListener(
-    "pointermove",
-    event=>{
-
-        if(
-            event.pointerId !==
-            joystickPointer
-        )
-            return;
-
-        updateJoystick(
-            event
-        );
-    }
-);
-
-function stopJoystick(event){
-
-    if(
-        joystickPointer !== null &&
-        event.pointerId !==
-        joystickPointer
-    )
+joystick.addEventListener("pointermove", event => {
+    if (event.pointerId !== joystickPointer)
         return;
 
-    joystickPointer=null;
+    updateJoystick(event);
+});
 
-    joystickX=0;
-    joystickY=0;
+joystick.addEventListener("pointerup", releaseJoystick);
+joystick.addEventListener("pointercancel", releaseJoystick);
 
-    stick.style.transform=
+function releaseJoystick(event) {
+    if (
+        joystickPointer !== null &&
+        event.pointerId !== joystickPointer
+    ) return;
+
+    joystickPointer = null;
+
+    joyX = 0;
+    joyY = 0;
+
+    stick.style.transform =
         "translate(0px,0px)";
 }
 
-joystickArea.addEventListener(
-    "pointerup",
-    stopJoystick
-);
+function updateJoystick(event) {
+    const rect =
+        joystick.getBoundingClientRect();
 
-joystickArea.addEventListener(
-    "pointercancel",
-    stopJoystick
-);
+    const centerX =
+        rect.left + rect.width / 2;
 
-function updateJoystick(event){
+    const centerY =
+        rect.top + rect.height / 2;
 
-    const rect=
-        joystickArea
-        .getBoundingClientRect();
+    let dx =
+        event.clientX - centerX;
 
-    let dx=
-        event.clientX -
-        (
-            rect.left +
-            rect.width/2
-        );
+    let dy =
+        event.clientY - centerY;
 
-    let dy=
-        event.clientY -
-        (
-            rect.top +
-            rect.height/2
-        );
+    const maximum = 38;
 
-    const maximum=40;
+    const distance =
+        Math.hypot(dx, dy);
 
-    const distance=
-        Math.hypot(
-            dx,
-            dy
-        );
+    if (distance > maximum) {
+        dx =
+            dx / distance * maximum;
 
-    if(distance>maximum){
-
-        dx=
-            dx /
-            distance *
-            maximum;
-
-        dy=
-            dy /
-            distance *
-            maximum;
+        dy =
+            dy / distance * maximum;
     }
 
-    joystickX=
-        dx /
-        maximum;
+    joyX = dx / maximum;
+    joyY = dy / maximum;
 
-    joystickY=
-        dy /
-        maximum;
-
-    stick.style.transform=
+    stick.style.transform =
         `translate(${dx}px,${dy}px)`;
 }
 
-sprintButton.addEventListener(
-    "pointerdown",
-    event=>{
+sprintButton.addEventListener("pointerdown", event => {
+    sprintTouch = true;
 
-        sprintTouch=true;
+    sprintButton.setPointerCapture(
+        event.pointerId
+    );
+});
 
-        sprintButton
-        .setPointerCapture(
-            event.pointerId
-        );
-    }
-);
+sprintButton.addEventListener("pointerup", () => {
+    sprintTouch = false;
+});
 
-sprintButton.addEventListener(
-    "pointerup",
-    ()=>{
-        sprintTouch=false;
-    }
-);
+sprintButton.addEventListener("pointercancel", () => {
+    sprintTouch = false;
+});
 
-sprintButton.addEventListener(
-    "pointercancel",
-    ()=>{
-        sprintTouch=false;
-    }
-);
-
-/* =========================================================
+/* ============================================================
    DETERMINISTIC RANDOM
-========================================================= */
+============================================================ */
 
-function hash(
-    x,
-    y,
-    extra=0
-){
-
-    let h=
-
+function hash(x, y, extra = 0) {
+    let h =
         WORLD_SEED ^
+        Math.imul(x, 374761393) ^
+        Math.imul(y, 668265263) ^
+        Math.imul(extra, 1442695041);
 
+    h =
         Math.imul(
-            x,
-            374761393
-        ) ^
-
-        Math.imul(
-            y,
-            668265263
-        ) ^
-
-        Math.imul(
-            extra,
-            144269
-        );
-
-    h=
-        Math.imul(
-            h ^
-            (
-                h >>> 13
-            ),
+            h ^ (h >>> 13),
             1274126177
         );
 
-    return(
-        h ^
-        (
-            h >>> 16
-        )
-    ) >>> 0;
+    return (h ^ (h >>> 16)) >>> 0;
 }
 
-function random01(
-    x,
-    y,
-    extra=0
-){
-
-    return(
-        hash(
-            x,
-            y,
-            extra
-        ) /
+function rand(x, y, extra = 0) {
+    return (
+        hash(x, y, extra) /
         4294967295
     );
 }
 
-function randomRange(
+function randInt(
     x,
     y,
     extra,
     minimum,
     maximum
-){
-
-    return(
+) {
+    return (
         minimum +
-
-        random01(
-            x,
-            y,
-            extra
-        ) *
-
-        (
-            maximum -
-            minimum
+        Math.floor(
+            rand(x, y, extra) *
+            (maximum - minimum + 1)
         )
     );
 }
@@ -576,2160 +453,2161 @@ function choose(
     x,
     y,
     extra,
-    options
-){
-
-    return options[
-        hash(
-            x,
-            y,
-            extra
-        ) %
-        options.length
+    array
+) {
+    return array[
+        hash(x, y, extra) %
+        array.length
     ];
 }
 
-/* =========================================================
-   BUILDING DATABASE
-========================================================= */
+/* ============================================================
+   CHUNK HELPERS
+============================================================ */
 
-const BUILDING_TYPES={
+function chunkKey(cx, cy) {
+    return cx + "," + cy;
+}
 
-    rowhouse:{
-        label:"ROW HOUSE",
-        floor:"#5b5349",
-        wall:"#272523",
-        accent:"#8d775d"
-    },
+function tileIndex(x, y) {
+    return y * CHUNK_TILES + x;
+}
 
-    apartment:{
-        label:"APARTMENTS",
-        floor:"#565351",
-        wall:"#242424",
-        accent:"#766e63"
-    },
-
-    market:{
-        label:"MARKET",
-        floor:"#625b4d",
-        wall:"#292621",
-        accent:"#b39a55"
-    },
-
-    pharmacy:{
-        label:"PHARMACY",
-        floor:"#5b625f",
-        wall:"#202625",
-        accent:"#76988b"
-    },
-
-    hardware:{
-        label:"HARDWARE",
-        floor:"#62574d",
-        wall:"#292521",
-        accent:"#b4774d"
-    },
-
-    diner:{
-        label:"DINER",
-        floor:"#665954",
-        wall:"#2a2423",
-        accent:"#a65b52"
-    },
-
-    clinic:{
-        label:"CLINIC",
-        floor:"#62645e",
-        wall:"#232624",
-        accent:"#8ca093"
-    },
-
-    warehouse:{
-        label:"WAREHOUSE",
-        floor:"#505255",
-        wall:"#212326",
-        accent:"#7b8185"
-    },
-
-    office:{
-        label:"OFFICES",
-        floor:"#565c5e",
-        wall:"#222628",
-        accent:"#718994"
-    },
-
-    station:{
-        label:"CITY SERVICES",
-        floor:"#5d5d58",
-        wall:"#252622",
-        accent:"#897b64"
-    }
-};
-
-/* =========================================================
-   CHUNKS
-========================================================= */
-
-function chunkKey(
-    cx,
-    cy
-){
-
-    return(
-        cx +
-        "," +
-        cy
+function validLocalTile(x, y) {
+    return (
+        x >= 0 &&
+        y >= 0 &&
+        x < CHUNK_TILES &&
+        y < CHUNK_TILES
     );
 }
 
-function getChunk(
-    cx,
-    cy
-){
+function setGround(chunk, x, y, type) {
+    if (!validLocalTile(x, y))
+        return;
 
-    const key=
-        chunkKey(
-            cx,
-            cy
-        );
+    chunk.ground[
+        tileIndex(x, y)
+    ] = type;
+}
 
-    if(
-        !chunkCache
-        .has(key)
-    ){
+function setOverlay(chunk, x, y, type) {
+    if (!validLocalTile(x, y))
+        return;
 
-        chunkCache.set(
+    chunk.overlay[
+        tileIndex(x, y)
+    ] = type;
+}
+
+function makeSolid(chunk, x, y, solid = true) {
+    const key = x + "," + y;
+
+    if (solid)
+        chunk.solid.add(key);
+    else
+        chunk.solid.delete(key);
+}
+
+function makeWall(chunk, x, y, type) {
+    setOverlay(chunk, x, y, type);
+    makeSolid(chunk, x, y, true);
+}
+
+function makeWindow(chunk, x, y, direction) {
+    setOverlay(
+        chunk,
+        x,
+        y,
+        direction === "horizontal"
+            ? "windowH"
+            : "windowV"
+    );
+
+    makeSolid(chunk, x, y, true);
+}
+
+function makeDoor(chunk, x, y) {
+    setOverlay(chunk, x, y, "door");
+    makeSolid(chunk, x, y, false);
+}
+
+function addProp(
+    chunk,
+    kind,
+    x,
+    y,
+    solid = false
+) {
+    chunk.props.push({
+        kind,
+        x,
+        y
+    });
+
+    if (solid)
+        makeSolid(chunk, x, y, true);
+}
+
+/* ============================================================
+   CREATE CHUNK
+============================================================ */
+
+function getChunk(cx, cy) {
+    const key =
+        chunkKey(cx, cy);
+
+    if (!chunks.has(key)) {
+        chunks.set(
             key,
-            generateChunk(
-                cx,
-                cy
-            )
+            generateChunk(cx, cy)
         );
     }
 
-    return(
-        chunkCache
-        .get(key)
-    );
+    return chunks.get(key);
 }
 
-/* =========================================================
-   CITY DISTRICTS
-========================================================= */
-
-function generateChunk(
-    cx,
-    cy
-){
-
-    const roll=
-        random01(
-            cx,
-            cy,
-            1
-        );
-
-    let type=
-        "residential";
-
-    if(roll < .08){
-
-        type=
-            "park";
-    }
-
-    else if(
-        roll < .14
-    ){
-
-        type=
-            "parking";
-    }
-
-    else if(
-        roll < .19
-    ){
-
-        type=
-            "civic";
-    }
-
-    else if(
-        roll < .32
-    ){
-
-        type=
-            "industrial";
-    }
-
-    else if(
-        roll < .58
-    ){
-
-        type=
-            "commercial";
-    }
-
-    const chunk={
-
+function generateChunk(cx, cy) {
+    const chunk = {
         cx,
         cy,
 
-        type,
+        district: "residential",
 
-        buildings:[],
-        props:[],
-        fences:[],
-        trees:[]
+        ground:
+            new Array(
+                CHUNK_TILES *
+                CHUNK_TILES
+            ).fill("empty"),
+
+        overlay:
+            new Array(
+                CHUNK_TILES *
+                CHUNK_TILES
+            ).fill(null),
+
+        solid:
+            new Set(),
+
+        props: []
     };
 
-    if(
-        type ===
-        "park"
-    ){
+    generateBaseTerrain(chunk);
 
-        generatePark(
-            chunk
-        );
+    const roll =
+        rand(cx, cy, 10);
+
+    if (roll < 0.10)
+        chunk.district = "park";
+
+    else if (roll < 0.17)
+        chunk.district = "parking";
+
+    else if (roll < 0.31)
+        chunk.district = "industrial";
+
+    else if (roll < 0.59)
+        chunk.district = "commercial";
+
+    else if (roll < 0.68)
+        chunk.district = "civic";
+
+    else
+        chunk.district = "residential";
+
+    switch (chunk.district) {
+        case "park":
+            generatePark(chunk);
+            break;
+
+        case "parking":
+            generateParkingLot(chunk);
+            break;
+
+        case "industrial":
+            generateIndustrialBlock(chunk);
+            break;
+
+        case "commercial":
+            generateCommercialBlock(chunk);
+            break;
+
+        case "civic":
+            generateCivicBlock(chunk);
+            break;
+
+        default:
+            generateResidentialBlock(chunk);
+            break;
     }
 
-    else if(
-        type ===
-        "parking"
-    ){
-
-        generateParking(
-            chunk
-        );
-    }
-
-    else{
-
-        generateLots(
-            chunk
-        );
-    }
-
-    generateStreetProps(
-        chunk
-    );
+    addStreetFurniture(chunk);
 
     return chunk;
 }
 
-/* =========================================================
-   BUILDABLE AREA
-========================================================= */
+/* ============================================================
+   ROADS + SIDEWALKS
+============================================================ */
 
-function getLotBounds(){
+function generateBaseTerrain(chunk) {
+    for (
+        let y = 0;
+        y < CHUNK_TILES;
+        y++
+    ) {
+        for (
+            let x = 0;
+            x < CHUNK_TILES;
+            x++
+        ) {
+            if (
+                x < ROAD_TILES ||
+                y < ROAD_TILES
+            ) {
+                setGround(
+                    chunk,
+                    x,
+                    y,
+                    "road"
+                );
+            }
 
-    const margin=
+            else if (
+                x <
+                    ROAD_TILES +
+                    SIDEWALK_TILES ||
 
-        ROAD_WIDTH/2 +
+                y <
+                    ROAD_TILES +
+                    SIDEWALK_TILES ||
 
-        SIDEWALK_WIDTH +
+                x >=
+                    CHUNK_TILES -
+                    SIDEWALK_TILES ||
 
-        18;
+                y >=
+                    CHUNK_TILES -
+                    SIDEWALK_TILES
+            ) {
+                setGround(
+                    chunk,
+                    x,
+                    y,
+                    "sidewalk"
+                );
+            }
 
-    return{
+            else {
+                setGround(
+                    chunk,
+                    x,
+                    y,
+                    "empty"
+                );
+            }
+        }
+    }
+}
 
-        min:margin,
+/* ============================================================
+   LOT HELPERS
+============================================================ */
 
-        max:
-            CHUNK_SIZE -
-            margin,
-
-        size:
-            CHUNK_SIZE -
-            margin*2
+function lotRect(
+    x,
+    y,
+    width,
+    height
+) {
+    return {
+        x,
+        y,
+        w: width,
+        h: height
     };
 }
 
-/* =========================================================
-   LOT GENERATION
-========================================================= */
+function insetLot(lot, amount) {
+    return {
+        x: lot.x + amount,
+        y: lot.y + amount,
 
-function generateLots(
-    chunk
-){
+        w: lot.w - amount * 2,
+        h: lot.h - amount * 2
+    };
+}
 
-    const cx=
-        chunk.cx;
+/* ============================================================
+   RESIDENTIAL BLOCK
+============================================================ */
 
-    const cy=
-        chunk.cy;
+function generateResidentialBlock(chunk) {
+    const cx = chunk.cx;
+    const cy = chunk.cy;
 
-    const type=
-        chunk.type;
+    const columns =
+        rand(cx, cy, 40) > .55
+            ? 3
+            : 2;
 
-    const bounds=
-        getLotBounds();
+    const rows = 2;
 
-    let columns=2;
-    let rows=2;
+    const width =
+        BUILD_MAX - BUILD_MIN;
 
-    if(
-        type ===
-        "commercial"
-    ){
+    const lotWidth =
+        Math.floor(width / columns);
 
-        columns=3;
-        rows=2;
-    }
+    const lotHeight =
+        Math.floor(width / rows);
 
-    if(
-        type ===
-        "industrial"
-    ){
+    let id = 0;
 
-        columns=2;
-        rows=2;
-    }
-
-    if(
-        type ===
-        "civic"
-    ){
-
-        columns=1;
-        rows=1;
-    }
-
-    if(
-        type ===
-        "residential" &&
-
-        random01(
-            cx,
-            cy,
-            30
-        ) > .55
-    ){
-
-        columns=3;
-        rows=2;
-    }
-
-    const cellWidth=
-        bounds.size /
-        columns;
-
-    const cellHeight=
-        bounds.size /
-        rows;
-
-    let index=0;
-
-    for(
-        let gx=0;
-        gx<columns;
+    for (
+        let gx = 0;
+        gx < columns;
         gx++
-    ){
-
-        for(
-            let gy=0;
-            gy<rows;
+    ) {
+        for (
+            let gy = 0;
+            gy < rows;
             gy++
-        ){
+        ) {
+            id++;
 
-            index++;
+            const lot = lotRect(
+                BUILD_MIN +
+                    gx * lotWidth,
 
-            const padding=
-                randomRange(
+                BUILD_MIN +
+                    gy * lotHeight,
+
+                lotWidth,
+                lotHeight
+            );
+
+            if (
+                rand(
                     cx,
                     cy,
-                    100+index,
-                    14,
-                    30
-                );
-
-            const lot={
-
-                x:
-                    bounds.min +
-                    gx *
-                    cellWidth +
-                    padding,
-
-                y:
-                    bounds.min +
-                    gy *
-                    cellHeight +
-                    padding,
-
-                w:
-                    cellWidth -
-                    padding*2,
-
-                h:
-                    cellHeight -
-                    padding*2
-            };
-
-            /*
-                Some lots become fenced
-                utility/service areas.
-            */
-
-            if(
-                random01(
-                    cx,
-                    cy,
-                    200+index
-                ) < .09
-            ){
-
-                generateServiceYard(
+                    100 + id
+                ) < .08
+            ) {
+                generateBackyard(
                     chunk,
-                    lot
+                    lot,
+                    id
                 );
 
                 continue;
             }
 
-            createBuildingForLot(
+            const buildingType =
+                choose(
+                    cx,
+                    cy,
+                    200 + id,
+                    [
+                        "house",
+                        "house",
+                        "rowhouse",
+                        "apartment"
+                    ]
+                );
+
+            const building =
+                insetLot(
+                    lot,
+                    1
+                );
+
+            placeBuilding(
                 chunk,
-                lot,
-                index
+                building,
+                buildingType,
+                id
             );
         }
     }
 }
 
-/* =========================================================
-   BUILDING TYPE
-========================================================= */
+/* ============================================================
+   COMMERCIAL BLOCK
+============================================================ */
 
-function chooseBuildingType(
-    district,
-    cx,
-    cy,
-    index
-){
+function generateCommercialBlock(chunk) {
+    const cx = chunk.cx;
+    const cy = chunk.cy;
 
-    if(
-        district ===
-        "residential"
-    ){
+    const width =
+        BUILD_MAX -
+        BUILD_MIN;
 
-        return choose(
-            cx,
-            cy,
-            300+index,
-            [
-                "rowhouse",
-                "rowhouse",
-                "apartment"
-            ]
+    const lotWidth =
+        Math.floor(width / 2);
+
+    const lotHeight =
+        Math.floor(width / 2);
+
+    let id = 0;
+
+    for (let gx = 0; gx < 2; gx++) {
+        for (let gy = 0; gy < 2; gy++) {
+            id++;
+
+            const lot =
+                lotRect(
+                    BUILD_MIN +
+                        gx * lotWidth,
+
+                    BUILD_MIN +
+                        gy * lotHeight,
+
+                    lotWidth,
+                    lotHeight
+                );
+
+            const type =
+                choose(
+                    cx,
+                    cy,
+                    400 + id,
+                    [
+                        "store",
+                        "store",
+                        "pharmacy",
+                        "diner",
+                        "office"
+                    ]
+                );
+
+            placeBuilding(
+                chunk,
+                insetLot(lot, 1),
+                type,
+                id
+            );
+        }
+    }
+}
+
+/* ============================================================
+   INDUSTRIAL BLOCK
+============================================================ */
+
+function generateIndustrialBlock(chunk) {
+    const split =
+        rand(
+            chunk.cx,
+            chunk.cy,
+            500
+        ) > .45;
+
+    const width =
+        BUILD_MAX -
+        BUILD_MIN;
+
+    if (split) {
+        const half =
+            Math.floor(width / 2);
+
+        placeBuilding(
+            chunk,
+
+            {
+                x: BUILD_MIN + 1,
+                y: BUILD_MIN + 1,
+                w: half - 2,
+                h: width - 2
+            },
+
+            "warehouse",
+            1
+        );
+
+        generateServiceYard(
+            chunk,
+
+            {
+                x:
+                    BUILD_MIN +
+                    half,
+
+                y:
+                    BUILD_MIN,
+
+                w:
+                    width -
+                    half,
+
+                h:
+                    width
+            },
+
+            2
         );
     }
 
-    if(
-        district ===
-        "commercial"
-    ){
+    else {
+        placeBuilding(
+            chunk,
 
-        return choose(
-            cx,
-            cy,
-            300+index,
-            [
-                "market",
-                "pharmacy",
-                "hardware",
-                "diner",
-                "office"
-            ]
+            {
+                x: BUILD_MIN + 2,
+                y: BUILD_MIN + 2,
+
+                w: width - 4,
+                h:
+                    Math.floor(
+                        width * .60
+                    )
+            },
+
+            "warehouse",
+            1
+        );
+
+        generateServiceYard(
+            chunk,
+
+            {
+                x: BUILD_MIN,
+                y:
+                    BUILD_MIN +
+                    Math.floor(
+                        width * .63
+                    ),
+
+                w: width,
+                h:
+                    Math.floor(
+                        width * .37
+                    )
+            },
+
+            2
         );
     }
+}
 
-    if(
-        district ===
-        "industrial"
-    ){
+/* ============================================================
+   CIVIC BLOCK
+============================================================ */
 
-        return choose(
-            cx,
-            cy,
-            300+index,
-            [
-                "warehouse",
-                "warehouse",
-                "hardware",
-                "office"
-            ]
-        );
-    }
+function generateCivicBlock(chunk) {
+    const width =
+        BUILD_MAX -
+        BUILD_MIN;
 
-    if(
-        district ===
-        "civic"
-    ){
-
-        return choose(
-            cx,
-            cy,
-            300+index,
+    const type =
+        choose(
+            chunk.cx,
+            chunk.cy,
+            600,
             [
                 "clinic",
-                "station",
-                "office"
+                "office",
+                "clinic"
             ]
         );
-    }
 
-    return "apartment";
-}
+    placeBuilding(
+        chunk,
 
-/* =========================================================
-   CREATE BUILDING
-========================================================= */
-
-function createBuildingForLot(
-    chunk,
-    lot,
-    index
-){
-
-    const cx=
-        chunk.cx;
-
-    const cy=
-        chunk.cy;
-
-    const type=
-        chooseBuildingType(
-            chunk.type,
-            cx,
-            cy,
-            index
-        );
-
-    let inset=
-        randomRange(
-            cx,
-            cy,
-            400+index,
-            6,
-            18
-        );
-
-    if(
-        type ===
-        "warehouse"
-    ){
-
-        inset=8;
-    }
-
-    const x=
-        lot.x +
-        inset;
-
-    const y=
-        lot.y +
-        inset;
-
-    const width=
-        Math.max(
-            90,
-            lot.w -
-            inset*2
-        );
-
-    const height=
-        Math.max(
-            80,
-            lot.h -
-            inset*2
-        );
-
-    const doorSide=
-        hash(
-            cx,
-            cy,
-            500+index
-        ) % 4;
-
-    const doorSize=26;
-
-    const edgeLength=
-
-        doorSide % 2 === 0
-
-        ? width
-
-        : height;
-
-    const doorOffset=
-
-        edgeLength *
-
-        randomRange(
-            cx,
-            cy,
-            520+index,
-            .35,
-            .65
-        );
-
-    const building={
+        {
+            x: BUILD_MIN + 4,
+            y: BUILD_MIN + 4,
+            w: width - 8,
+            h: width - 8
+        },
 
         type,
-
-        x,
-        y,
-
-        w:width,
-        h:height,
-
-        doorSide,
-        doorSize,
-        doorOffset,
-
-        walls:[],
-        interiorWalls:[],
-        windows:[],
-        props:[],
-
-        sign:
-            BUILDING_TYPES[
-                type
-            ].label
-    };
-
-    addOuterWalls(
-        building
+        1
     );
+}
 
-    addInteriorPlan(
-        building
-    );
+/* ============================================================
+   BUILDING
+============================================================ */
+
+function placeBuilding(
+    chunk,
+    rect,
+    type,
+    id
+) {
+    if (
+        rect.w < 7 ||
+        rect.h < 7
+    )
+        return;
+
+    const floorType =
+        getFloorForBuilding(type);
+
+    const wallType =
+        getWallForBuilding(type);
+
+    /*
+        Floor
+    */
+
+    for (
+        let y = rect.y + 1;
+        y < rect.y + rect.h - 1;
+        y++
+    ) {
+        for (
+            let x = rect.x + 1;
+            x < rect.x + rect.w - 1;
+            x++
+        ) {
+            setGround(
+                chunk,
+                x,
+                y,
+                floorType
+            );
+        }
+    }
+
+    /*
+        Outer walls
+    */
+
+    for (
+        let x = rect.x;
+        x < rect.x + rect.w;
+        x++
+    ) {
+        makeWall(
+            chunk,
+            x,
+            rect.y,
+            wallType
+        );
+
+        makeWall(
+            chunk,
+            x,
+            rect.y + rect.h - 1,
+            wallType
+        );
+    }
+
+    for (
+        let y = rect.y;
+        y < rect.y + rect.h;
+        y++
+    ) {
+        makeWall(
+            chunk,
+            rect.x,
+            y,
+            wallType
+        );
+
+        makeWall(
+            chunk,
+            rect.x + rect.w - 1,
+            y,
+            wallType
+        );
+    }
+
+    /*
+        Pick a street-facing side.
+    */
+
+    let entranceSide;
+
+    const centerX =
+        rect.x +
+        rect.w / 2;
+
+    const centerY =
+        rect.y +
+        rect.h / 2;
+
+    const distanceTop =
+        centerY -
+        BUILD_MIN;
+
+    const distanceLeft =
+        centerX -
+        BUILD_MIN;
+
+    const distanceRight =
+        BUILD_MAX -
+        centerX;
+
+    const distanceBottom =
+        BUILD_MAX -
+        centerY;
+
+    const minimum =
+        Math.min(
+            distanceTop,
+            distanceLeft,
+            distanceRight,
+            distanceBottom
+        );
+
+    if (minimum === distanceTop)
+        entranceSide = "top";
+
+    else if (minimum === distanceLeft)
+        entranceSide = "left";
+
+    else if (minimum === distanceRight)
+        entranceSide = "right";
+
+    else
+        entranceSide = "bottom";
+
+    const door =
+        addExteriorDoor(
+            chunk,
+            rect,
+            entranceSide
+        );
 
     addWindows(
-        building,
-        cx,
-        cy,
-        index
+        chunk,
+        rect,
+        entranceSide
     );
 
-    chunk.buildings.push(
-        building
-    );
+    /*
+        Building-specific interior.
+    */
 
-    if(
-        type ===
-        "warehouse" ||
+    switch (type) {
+        case "house":
+        case "rowhouse":
+        case "apartment":
+            createHomeInterior(
+                chunk,
+                rect,
+                wallType
+            );
+            break;
 
-        type ===
-        "hardware"
-    ){
+        case "store":
+        case "pharmacy":
+            createStoreInterior(
+                chunk,
+                rect,
+                type,
+                wallType
+            );
+            break;
 
+        case "diner":
+            createDinerInterior(
+                chunk,
+                rect,
+                wallType
+            );
+            break;
+
+        case "warehouse":
+            createWarehouseInterior(
+                chunk,
+                rect,
+                wallType
+            );
+            break;
+
+        case "clinic":
+            createClinicInterior(
+                chunk,
+                rect,
+                wallType
+            );
+            break;
+
+        case "office":
+            createOfficeInterior(
+                chunk,
+                rect,
+                wallType
+            );
+            break;
+    }
+
+    /*
+        Small awning/sign marker.
+        No giant text labels.
+    */
+
+    if (
+        type === "store" ||
+        type === "pharmacy" ||
+        type === "diner"
+    ) {
         chunk.props.push({
-
-            kind:"dumpster",
-
-            x:
-                x +
-                width -
-                38,
-
-            y:
-                y +
-                height*.72,
-
-            w:26,
-            h:16
+            kind: "awning",
+            x: door.x,
+            y: door.y
         });
     }
 }
 
-/* =========================================================
-   EXTERIOR WALLS + ENTERABLE DOORS
-========================================================= */
-
-function addOuterWalls(
-    building
-){
-
-    const t=WALL;
-
-    const gap=
-        building.doorSize;
-
-    const offset=
-        building.doorOffset;
-
-    const x=
-        building.x;
-
-    const y=
-        building.y;
-
-    const width=
-        building.w;
-
-    const height=
-        building.h;
-
-    /*
-        TOP DOOR
-    */
-
-    if(
-        building.doorSide === 0
-    ){
-
-        building.walls.push(
-
-            {
-                x:x,
-                y:y,
-                w:offset-gap/2,
-                h:t
-            },
-
-            {
-                x:
-                    x +
-                    offset +
-                    gap/2,
-
-                y:y,
-
-                w:
-                    width -
-                    offset -
-                    gap/2,
-
-                h:t
-            },
-
-            {
-                x:x,
-                y:y,
-                w:t,
-                h:height
-            },
-
-            {
-                x:
-                    x +
-                    width -
-                    t,
-
-                y:y,
-                w:t,
-                h:height
-            },
-
-            {
-                x:x,
-                y:
-                    y +
-                    height -
-                    t,
-
-                w:width,
-                h:t
-            }
-        );
-    }
-
-    /*
-        RIGHT DOOR
-    */
-
-    else if(
-        building.doorSide === 1
-    ){
-
-        building.walls.push(
-
-            {
-                x:x,
-                y:y,
-                w:width,
-                h:t
-            },
-
-            {
-                x:x,
-
-                y:
-                    y +
-                    height -
-                    t,
-
-                w:width,
-                h:t
-            },
-
-            {
-                x:x,
-                y:y,
-                w:t,
-                h:height
-            },
-
-            {
-                x:
-                    x +
-                    width -
-                    t,
-
-                y:y,
-
-                w:t,
-
-                h:
-                    offset -
-                    gap/2
-            },
-
-            {
-                x:
-                    x +
-                    width -
-                    t,
-
-                y:
-                    y +
-                    offset +
-                    gap/2,
-
-                w:t,
-
-                h:
-                    height -
-                    offset -
-                    gap/2
-            }
-        );
-    }
-
-    /*
-        BOTTOM DOOR
-    */
-
-    else if(
-        building.doorSide === 2
-    ){
-
-        building.walls.push(
-
-            {
-                x:x,
-                y:y,
-                w:width,
-                h:t
-            },
-
-            {
-                x:x,
-                y:y,
-                w:t,
-                h:height
-            },
-
-            {
-                x:
-                    x +
-                    width -
-                    t,
-
-                y:y,
-
-                w:t,
-                h:height
-            },
-
-            {
-                x:x,
-
-                y:
-                    y +
-                    height -
-                    t,
-
-                w:
-                    offset -
-                    gap/2,
-
-                h:t
-            },
-
-            {
-                x:
-                    x +
-                    offset +
-                    gap/2,
-
-                y:
-                    y +
-                    height -
-                    t,
-
-                w:
-                    width -
-                    offset -
-                    gap/2,
-
-                h:t
-            }
-        );
-    }
-
-    /*
-        LEFT DOOR
-    */
-
-    else{
-
-        building.walls.push(
-
-            {
-                x:x,
-                y:y,
-                w:width,
-                h:t
-            },
-
-            {
-                x:x,
-
-                y:
-                    y +
-                    height -
-                    t,
-
-                w:width,
-                h:t
-            },
-
-            {
-                x:
-                    x +
-                    width -
-                    t,
-
-                y:y,
-
-                w:t,
-                h:height
-            },
-
-            {
-                x:x,
-                y:y,
-                w:t,
-
-                h:
-                    offset -
-                    gap/2
-            },
-
-            {
-                x:x,
-
-                y:
-                    y +
-                    offset +
-                    gap/2,
-
-                w:t,
-
-                h:
-                    height -
-                    offset -
-                    gap/2
-            }
-        );
+function getFloorForBuilding(type) {
+    switch (type) {
+        case "house":
+        case "rowhouse":
+            return "floorHouse";
+
+        case "apartment":
+            return "floorApartment";
+
+        case "store":
+        case "pharmacy":
+        case "diner":
+            return "floorStore";
+
+        case "clinic":
+            return "floorClinic";
+
+        case "warehouse":
+            return "floorWarehouse";
+
+        default:
+            return "floorOffice";
     }
 }
 
-/* =========================================================
-   INTERIORS
-========================================================= */
+function getWallForBuilding(type) {
+    switch (type) {
+        case "house":
+        case "rowhouse":
+        case "apartment":
+            return "wallBrick";
 
-function addInteriorPlan(
-    building
-){
+        case "warehouse":
+            return "wallConcrete";
 
-    const x=
-        building.x;
+        default:
+            return "wallLight";
+    }
+}
 
-    const y=
-        building.y;
+/* ============================================================
+   EXTERIOR DOOR
+============================================================ */
 
-    const width=
-        building.w;
+function addExteriorDoor(
+    chunk,
+    rect,
+    side
+) {
+    let x;
+    let y;
 
-    const height=
-        building.h;
+    if (side === "top") {
+        x =
+            rect.x +
+            Math.floor(
+                rect.w / 2
+            );
 
-    const thickness=6;
-
-    /*
-        Warehouse shelves
-    */
-
-    if(
-        building.type ===
-        "warehouse"
-    ){
-
-        building
-        .interiorWalls
-        .push({
-
-            x:
-                x +
-                width*.68,
-
-            y:
-                y +
-                thickness,
-
-            w:thickness,
-
-            h:
-                height*.55
-        });
-
-        building.props.push(
-
-            {
-                kind:"shelf",
-
-                x:
-                    x +
-                    width*.16,
-
-                y:
-                    y +
-                    height*.26,
-
-                w:
-                    width*.42,
-
-                h:12
-            },
-
-            {
-                kind:"shelf",
-
-                x:
-                    x +
-                    width*.16,
-
-                y:
-                    y +
-                    height*.47,
-
-                w:
-                    width*.42,
-
-                h:12
-            },
-
-            {
-                kind:"shelf",
-
-                x:
-                    x +
-                    width*.16,
-
-                y:
-                    y +
-                    height*.68,
-
-                w:
-                    width*.42,
-
-                h:12
-            }
-        );
-
-        return;
+        y = rect.y;
     }
 
-    /*
-        Store layouts
-    */
+    else if (side === "bottom") {
+        x =
+            rect.x +
+            Math.floor(
+                rect.w / 2
+            );
 
-    if(
-        building.type ===
-        "market" ||
-
-        building.type ===
-        "pharmacy" ||
-
-        building.type ===
-        "hardware"
-    ){
-
-        building
-        .interiorWalls
-        .push({
-
-            x:
-                x +
-                width*.76,
-
-            y:
-                y +
-                thickness,
-
-            w:thickness,
-
-            h:
-                height*.34
-        });
-
-        for(
-            let row=0;
-            row<3;
-            row++
-        ){
-
-            building.props.push({
-
-                kind:"shelf",
-
-                x:
-                    x +
-                    width*.18,
-
-                y:
-                    y +
-                    height*
-                    (
-                        .28 +
-                        row*.19
-                    ),
-
-                w:
-                    width*.48,
-
-                h:10
-            });
-        }
-
-        building.props.push({
-
-            kind:"counter",
-
-            x:
-                x +
-                width*.58,
-
-            y:
-                y +
-                height*.13,
-
-            w:
-                width*.25,
-
-            h:12
-        });
-
-        return;
+        y =
+            rect.y +
+            rect.h -
+            1;
     }
 
-    /*
-        Diner
-    */
+    else if (side === "left") {
+        x = rect.x;
 
-    if(
-        building.type ===
-        "diner"
-    ){
-
-        building
-        .interiorWalls
-        .push({
-
-            x:
-                x +
-                width*.62,
-
-            y:
-                y +
-                thickness,
-
-            w:thickness,
-
-            h:
-                height*.36
-        });
-
-        for(
-            let row=0;
-            row<3;
-            row++
-        ){
-
-            building.props.push({
-
-                kind:"table",
-
-                x:
-                    x +
-                    width*.22,
-
-                y:
-                    y +
-                    height*
-                    (
-                        .25 +
-                        row*.22
-                    ),
-
-                w:28,
-
-                h:20
-            });
-        }
-
-        building.props.push({
-
-            kind:"counter",
-
-            x:
-                x +
-                width*.70,
-
-            y:
-                y +
-                height*.55,
-
-            w:14,
-
-            h:
-                height*.28
-        });
-
-        return;
+        y =
+            rect.y +
+            Math.floor(
+                rect.h / 2
+            );
     }
 
-    /*
-        Apartments, offices and clinics
-    */
+    else {
+        x =
+            rect.x +
+            rect.w -
+            1;
 
-    const vertical=
+        y =
+            rect.y +
+            Math.floor(
+                rect.h / 2
+            );
+    }
 
-        x +
-        width*.52;
-
-    const horizontal=
-
-        y +
-        height*.52;
-
-    building
-    .interiorWalls
-    .push(
-
-        {
-            x:vertical,
-
-            y:
-                y +
-                thickness,
-
-            w:thickness,
-
-            h:
-                height*.34
-        },
-
-        {
-            x:vertical,
-
-            y:
-                y +
-                height*.46,
-
-            w:thickness,
-
-            h:
-                height*.54 -
-                thickness
-        },
-
-        {
-            x:
-                x +
-                thickness,
-
-            y:horizontal,
-
-            w:
-                width*.30,
-
-            h:thickness
-        },
-
-        {
-            x:
-                x +
-                width*.40,
-
-            y:horizontal,
-
-            w:
-                width*.60 -
-                thickness,
-
-            h:thickness
-        }
+    makeDoor(
+        chunk,
+        x,
+        y
     );
 
-    if(
-        building.type ===
-        "rowhouse" ||
-
-        building.type ===
-        "apartment"
-    ){
-
-        building.props.push(
-
-            {
-                kind:"bed",
-
-                x:
-                    x +
-                    width*.68,
-
-                y:
-                    y +
-                    height*.18,
-
-                w:34,
-                h:22
-            },
-
-            {
-                kind:"sofa",
-
-                x:
-                    x +
-                    width*.18,
-
-                y:
-                    y +
-                    height*.68,
-
-                w:42,
-                h:18
-            },
-
-            {
-                kind:"table",
-
-                x:
-                    x +
-                    width*.66,
-
-                y:
-                    y +
-                    height*.68,
-
-                w:26,
-                h:22
-            }
-        );
-    }
-
-    else{
-
-        building.props.push(
-
-            {
-                kind:"desk",
-
-                x:
-                    x +
-                    width*.18,
-
-                y:
-                    y +
-                    height*.22,
-
-                w:32,
-                h:18
-            },
-
-            {
-                kind:"desk",
-
-                x:
-                    x +
-                    width*.65,
-
-                y:
-                    y +
-                    height*.68,
-
-                w:32,
-                h:18
-            }
-        );
-    }
+    return {
+        x,
+        y
+    };
 }
 
-/* =========================================================
+/* ============================================================
    WINDOWS
-========================================================= */
+============================================================ */
 
 function addWindows(
-    building,
-    cx,
-    cy,
-    index
-){
+    chunk,
+    rect,
+    entranceSide
+) {
+    for (
+        let x = rect.x + 2;
+        x < rect.x + rect.w - 2;
+        x += 3
+    ) {
+        if (
+            entranceSide !== "top" ||
+            x !==
+                rect.x +
+                Math.floor(
+                    rect.w / 2
+                )
+        ) {
+            makeWindow(
+                chunk,
+                x,
+                rect.y,
+                "horizontal"
+            );
+        }
 
-    const count=
-        Math.max(
-            2,
+        if (
+            entranceSide !== "bottom" ||
+            x !==
+                rect.x +
+                Math.floor(
+                    rect.w / 2
+                )
+        ) {
+            makeWindow(
+                chunk,
+                x,
+                rect.y + rect.h - 1,
+                "horizontal"
+            );
+        }
+    }
 
+    for (
+        let y = rect.y + 2;
+        y < rect.y + rect.h - 2;
+        y += 3
+    ) {
+        if (
+            entranceSide !== "left" ||
+            y !==
+                rect.y +
+                Math.floor(
+                    rect.h / 2
+                )
+        ) {
+            makeWindow(
+                chunk,
+                rect.x,
+                y,
+                "vertical"
+            );
+        }
+
+        if (
+            entranceSide !== "right" ||
+            y !==
+                rect.y +
+                Math.floor(
+                    rect.h / 2
+                )
+        ) {
+            makeWindow(
+                chunk,
+                rect.x + rect.w - 1,
+                y,
+                "vertical"
+            );
+        }
+    }
+}
+
+/* ============================================================
+   PARTITIONS
+============================================================ */
+
+function verticalPartition(
+    chunk,
+    x,
+    y1,
+    y2,
+    gapY,
+    wallType
+) {
+    for (
+        let y = y1;
+        y <= y2;
+        y++
+    ) {
+        if (y === gapY) {
+            makeDoor(
+                chunk,
+                x,
+                y
+            );
+
+            continue;
+        }
+
+        makeWall(
+            chunk,
+            x,
+            y,
+            wallType
+        );
+    }
+}
+
+function horizontalPartition(
+    chunk,
+    y,
+    x1,
+    x2,
+    gapX,
+    wallType
+) {
+    for (
+        let x = x1;
+        x <= x2;
+        x++
+    ) {
+        if (x === gapX) {
+            makeDoor(
+                chunk,
+                x,
+                y
+            );
+
+            continue;
+        }
+
+        makeWall(
+            chunk,
+            x,
+            y,
+            wallType
+        );
+    }
+}
+
+/* ============================================================
+   HOUSE / APARTMENT INTERIOR
+============================================================ */
+
+function createHomeInterior(
+    chunk,
+    rect,
+    wallType
+) {
+    const midX =
+        rect.x +
+        Math.floor(
+            rect.w * .55
+        );
+
+    const midY =
+        rect.y +
+        Math.floor(
+            rect.h * .52
+        );
+
+    if (rect.w >= 10) {
+        verticalPartition(
+            chunk,
+
+            midX,
+
+            rect.y + 1,
+            rect.y + rect.h - 2,
+
+            midY - 1,
+
+            wallType
+        );
+    }
+
+    if (rect.h >= 10) {
+        horizontalPartition(
+            chunk,
+
+            midY,
+
+            rect.x + 1,
+            midX - 1,
+
+            rect.x +
             Math.floor(
-                (
-                    building.w +
-                    building.h
-                ) /
-                125
+                rect.w * .28
+            ),
+
+            wallType
+        );
+    }
+
+    addProp(
+        chunk,
+        "bed",
+        rect.x + rect.w - 3,
+        rect.y + 2,
+        true
+    );
+
+    addProp(
+        chunk,
+        "dresser",
+        rect.x + rect.w - 3,
+        rect.y + 4,
+        true
+    );
+
+    addProp(
+        chunk,
+        "sofa",
+        rect.x + 2,
+        rect.y + rect.h - 3,
+        true
+    );
+
+    addProp(
+        chunk,
+        "table",
+        rect.x + 3,
+        rect.y + 2,
+        true
+    );
+
+    addProp(
+        chunk,
+        "chair",
+        rect.x + 4,
+        rect.y + 2,
+        false
+    );
+}
+
+/* ============================================================
+   STORE INTERIOR
+============================================================ */
+
+function createStoreInterior(
+    chunk,
+    rect,
+    type,
+    wallType
+) {
+    /*
+        Back stock room.
+    */
+
+    const stockY =
+        rect.y +
+        Math.max(
+            4,
+            Math.floor(
+                rect.h * .30
             )
         );
 
-    for(
-        let n=0;
-        n<count;
-        n++
-    ){
+    horizontalPartition(
+        chunk,
 
-        const side=
+        stockY,
 
-            hash(
-                cx,
-                cy,
-                700+
-                index*20+
-                n
-            ) % 4;
+        rect.x + 1,
+        rect.x + rect.w - 2,
 
-        const position=
+        rect.x +
+        Math.floor(
+            rect.w * .72
+        ),
 
-            randomRange(
-                cx,
-                cy,
-                710+
-                index*20+
-                n,
-                .18,
-                .82
+        wallType
+    );
+
+    /*
+        Shelf aisles.
+    */
+
+    for (
+        let y = stockY + 3;
+        y < rect.y + rect.h - 2;
+        y += 3
+    ) {
+        for (
+            let x = rect.x + 3;
+            x < rect.x + rect.w - 3;
+            x += 4
+        ) {
+            addProp(
+                chunk,
+                type === "pharmacy"
+                    ? "medicalShelf"
+                    : "shelf",
+
+                x,
+                y,
+                true
             );
-
-        if(side===0){
-
-            building
-            .windows
-            .push({
-
-                x:
-                    building.x +
-                    building.w*
-                    position -
-                    8,
-
-                y:
-                    building.y -
-                    1,
-
-                w:16,
-                h:3
-            });
         }
+    }
 
-        if(side===1){
+    /*
+        Checkout.
+    */
 
-            building
-            .windows
-            .push({
+    addProp(
+        chunk,
+        "counter",
+        rect.x + 2,
+        rect.y + rect.h - 3,
+        true
+    );
 
-                x:
-                    building.x +
-                    building.w -
-                    2,
+    addProp(
+        chunk,
+        "counter",
+        rect.x + 3,
+        rect.y + rect.h - 3,
+        true
+    );
+}
 
-                y:
-                    building.y +
-                    building.h*
-                    position -
-                    8,
+/* ============================================================
+   DINER
+============================================================ */
 
-                w:3,
-                h:16
-            });
+function createDinerInterior(
+    chunk,
+    rect,
+    wallType
+) {
+    const kitchenX =
+        rect.x +
+        Math.floor(
+            rect.w * .68
+        );
+
+    verticalPartition(
+        chunk,
+
+        kitchenX,
+
+        rect.y + 1,
+        rect.y + rect.h - 2,
+
+        rect.y +
+        Math.floor(
+            rect.h / 2
+        ),
+
+        wallType
+    );
+
+    for (
+        let y = rect.y + 3;
+        y < rect.y + rect.h - 2;
+        y += 3
+    ) {
+        addProp(
+            chunk,
+            "table",
+            rect.x + 3,
+            y,
+            true
+        );
+
+        if (
+            rect.w > 10
+        ) {
+            addProp(
+                chunk,
+                "table",
+                rect.x + 6,
+                y,
+                true
+            );
         }
+    }
 
-        if(side===2){
+    addProp(
+        chunk,
+        "counter",
+        kitchenX + 2,
+        rect.y + 3,
+        true
+    );
+}
 
-            building
-            .windows
-            .push({
+/* ============================================================
+   WAREHOUSE
+============================================================ */
 
-                x:
-                    building.x +
-                    building.w*
-                    position -
-                    8,
+function createWarehouseInterior(
+    chunk,
+    rect,
+    wallType
+) {
+    /*
+        Small office.
+    */
 
-                y:
-                    building.y +
-                    building.h -
-                    2,
+    const officeW =
+        Math.max(
+            4,
+            Math.floor(
+                rect.w * .28
+            )
+        );
 
-                w:16,
-                h:3
-            });
-        }
+    const officeH =
+        Math.max(
+            4,
+            Math.floor(
+                rect.h * .28
+            )
+        );
 
-        if(side===3){
+    verticalPartition(
+        chunk,
 
-            building
-            .windows
-            .push({
+        rect.x + officeW,
 
-                x:
-                    building.x -
-                    1,
+        rect.y + 1,
+        rect.y + officeH,
 
-                y:
-                    building.y +
-                    building.h*
-                    position -
-                    8,
+        rect.y + officeH - 1,
 
-                w:3,
-                h:16
-            });
+        wallType
+    );
+
+    horizontalPartition(
+        chunk,
+
+        rect.y + officeH,
+
+        rect.x + 1,
+        rect.x + officeW,
+
+        rect.x + officeW - 1,
+
+        wallType
+    );
+
+    /*
+        Storage racks.
+    */
+
+    for (
+        let y =
+            rect.y +
+            officeH +
+            3;
+
+        y <
+            rect.y +
+            rect.h -
+            2;
+
+        y += 3
+    ) {
+        for (
+            let x =
+                rect.x + 3;
+
+            x <
+                rect.x +
+                rect.w -
+                2;
+
+            x += 4
+        ) {
+            addProp(
+                chunk,
+                "warehouseRack",
+                x,
+                y,
+                true
+            );
         }
     }
 }
 
-/* =========================================================
-   SERVICE YARDS
-========================================================= */
+/* ============================================================
+   CLINIC
+============================================================ */
+
+function createClinicInterior(
+    chunk,
+    rect,
+    wallType
+) {
+    const midX =
+        rect.x +
+        Math.floor(
+            rect.w / 2
+        );
+
+    verticalPartition(
+        chunk,
+
+        midX,
+
+        rect.y + 1,
+        rect.y + rect.h - 2,
+
+        rect.y +
+        Math.floor(
+            rect.h / 2
+        ),
+
+        wallType
+    );
+
+    const roomY =
+        rect.y +
+        Math.floor(
+            rect.h * .40
+        );
+
+    horizontalPartition(
+        chunk,
+
+        roomY,
+
+        rect.x + 1,
+        rect.x + rect.w - 2,
+
+        midX + 1,
+
+        wallType
+    );
+
+    addProp(
+        chunk,
+        "medicalBed",
+        rect.x + 2,
+        rect.y + 2,
+        true
+    );
+
+    addProp(
+        chunk,
+        "medicalBed",
+        midX + 2,
+        rect.y + 2,
+        true
+    );
+
+    addProp(
+        chunk,
+        "medicalShelf",
+        rect.x + 2,
+        rect.y + rect.h - 3,
+        true
+    );
+}
+
+/* ============================================================
+   OFFICE
+============================================================ */
+
+function createOfficeInterior(
+    chunk,
+    rect,
+    wallType
+) {
+    const midX =
+        rect.x +
+        Math.floor(
+            rect.w / 2
+        );
+
+    const midY =
+        rect.y +
+        Math.floor(
+            rect.h / 2
+        );
+
+    verticalPartition(
+        chunk,
+        midX,
+        rect.y + 1,
+        rect.y + rect.h - 2,
+        midY - 1,
+        wallType
+    );
+
+    horizontalPartition(
+        chunk,
+        midY,
+        rect.x + 1,
+        rect.x + rect.w - 2,
+        midX + 1,
+        wallType
+    );
+
+    const positions = [
+        [rect.x + 2, rect.y + 2],
+        [midX + 2, rect.y + 2],
+        [rect.x + 2, midY + 2],
+        [midX + 2, midY + 2]
+    ];
+
+    for (
+        const position
+        of positions
+    ) {
+        addProp(
+            chunk,
+            "desk",
+            position[0],
+            position[1],
+            true
+        );
+    }
+}
+
+/* ============================================================
+   BACKYARD
+============================================================ */
+
+function generateBackyard(
+    chunk,
+    lot,
+    id
+) {
+    for (
+        let y = lot.y;
+        y < lot.y + lot.h;
+        y++
+    ) {
+        for (
+            let x = lot.x;
+            x < lot.x + lot.w;
+            x++
+        ) {
+            setGround(
+                chunk,
+                x,
+                y,
+                "grass"
+            );
+        }
+    }
+
+    /*
+        Fence with gap.
+    */
+
+    const gateX =
+        lot.x +
+        Math.floor(
+            lot.w / 2
+        );
+
+    for (
+        let x = lot.x;
+        x < lot.x + lot.w;
+        x++
+    ) {
+        if (x !== gateX) {
+            makeWall(
+                chunk,
+                x,
+                lot.y,
+                "fence"
+            );
+        }
+    }
+
+    for (
+        let y = lot.y;
+        y < lot.y + lot.h;
+        y++
+    ) {
+        makeWall(
+            chunk,
+            lot.x,
+            y,
+            "fence"
+        );
+
+        makeWall(
+            chunk,
+            lot.x + lot.w - 1,
+            y,
+            "fence"
+        );
+    }
+
+    addProp(
+        chunk,
+        "tree",
+        lot.x + 2,
+        lot.y + 3,
+        true
+    );
+
+    addProp(
+        chunk,
+        "trash",
+        lot.x + lot.w - 3,
+        lot.y + lot.h - 3,
+        true
+    );
+}
+
+/* ============================================================
+   SERVICE YARD
+============================================================ */
 
 function generateServiceYard(
     chunk,
-    lot
-){
-
-    const x=lot.x;
-    const y=lot.y;
-    const width=lot.w;
-    const height=lot.h;
-
-    chunk.fences.push(
-
-        {
-            x:x,
-            y:y,
-            w:width,
-            h:4
-        },
-
-        {
-            x:x,
-            y:y+height-4,
-            w:width,
-            h:4
-        },
-
-        {
-            x:x,
-            y:y,
-            w:4,
-            h:height
-        },
-
-        {
-            x:x+width-4,
-            y:y,
-            w:4,
-            h:height
+    lot,
+    id
+) {
+    for (
+        let y = lot.y;
+        y < lot.y + lot.h;
+        y++
+    ) {
+        for (
+            let x = lot.x;
+            x < lot.x + lot.w;
+            x++
+        ) {
+            setGround(
+                chunk,
+                x,
+                y,
+                "gravel"
+            );
         }
-    );
+    }
 
-    chunk.props.push(
-
-        {
-            kind:"dumpster",
-
-            x:
-                x +
-                width*.22,
-
-            y:
-                y +
-                height*.28,
-
-            w:32,
-            h:18
-        },
-
-        {
-            kind:"crate",
-
-            x:
-                x +
-                width*.62,
-
-            y:
-                y +
-                height*.55,
-
-            w:24,
-            h:24
-        }
-    );
-}
-
-/* =========================================================
-   PARKS
-========================================================= */
-
-function generatePark(
-    chunk
-){
-
-    const bounds=
-        getLotBounds();
-
-    const cx=
-        chunk.cx;
-
-    const cy=
-        chunk.cy;
-
-    const count=
-
-        10 +
-
+    const gate =
+        lot.x +
         Math.floor(
-
-            random01(
-                cx,
-                cy,
-                40
-            ) *
-
-            12
+            lot.w / 2
         );
 
-    for(
-        let i=0;
-        i<count;
-        i++
-    ){
+    for (
+        let x = lot.x;
+        x < lot.x + lot.w;
+        x++
+    ) {
+        if (
+            x !== gate &&
+            x !== gate + 1
+        ) {
+            makeWall(
+                chunk,
+                x,
+                lot.y,
+                "fence"
+            );
+        }
 
-        chunk.trees.push({
-
-            x:
-                randomRange(
-                    cx,
-                    cy,
-                    50+i,
-                    bounds.min+25,
-                    bounds.max-25
-                ),
-
-            y:
-                randomRange(
-                    cx,
-                    cy,
-                    100+i,
-                    bounds.min+25,
-                    bounds.max-25
-                ),
-
-            size:
-                randomRange(
-                    cx,
-                    cy,
-                    150+i,
-                    24,
-                    42
-                )
-        });
+        makeWall(
+            chunk,
+            x,
+            lot.y + lot.h - 1,
+            "fence"
+        );
     }
 
-    chunk.props.push(
+    for (
+        let y = lot.y;
+        y < lot.y + lot.h;
+        y++
+    ) {
+        makeWall(
+            chunk,
+            lot.x,
+            y,
+            "fence"
+        );
 
-        {
-            kind:"bench",
+        makeWall(
+            chunk,
+            lot.x + lot.w - 1,
+            y,
+            "fence"
+        );
+    }
 
-            x:
-                CHUNK_SIZE*.42,
+    addProp(
+        chunk,
+        "dumpster",
+        lot.x + 2,
+        lot.y + 3,
+        true
+    );
 
-            y:
-                CHUNK_SIZE*.49,
+    addProp(
+        chunk,
+        "crate",
+        lot.x + lot.w - 3,
+        lot.y + 3,
+        true
+    );
 
-            w:42,
-            h:12
-        },
-
-        {
-            kind:"bench",
-
-            x:
-                CHUNK_SIZE*.56,
-
-            y:
-                CHUNK_SIZE*.49,
-
-            w:42,
-            h:12
-        }
+    addProp(
+        chunk,
+        "crate",
+        lot.x + lot.w - 4,
+        lot.y + 4,
+        true
     );
 }
 
-/* =========================================================
-   PARKING LOTS
-========================================================= */
+/* ============================================================
+   PARK
+============================================================ */
 
-function generateParking(
-    chunk
-){
-
-    const bounds=
-        getLotBounds();
-
-    const cx=
-        chunk.cx;
-
-    const cy=
-        chunk.cy;
-
-    for(
-        let i=0;
-        i<8;
-        i++
-    ){
-
-        if(
-            random01(
-                cx,
-                cy,
-                2000+i
-            ) > .38
-        ){
-
-            chunk.props.push({
-
-                kind:"car",
-
-                x:
-                    bounds.min +
-                    55 +
-                    (
-                        i%4
-                    ) *
-                    105,
-
-                y:
-                    bounds.min +
-                    65 +
-                    Math.floor(
-                        i/4
-                    ) *
-                    165,
-
-                w:42,
-                h:76,
-
-                tint:
-                    choose(
-                        cx,
-                        cy,
-                        2100+i,
-                        [
-                            "#3d4850",
-                            "#6a3832",
-                            "#32383d",
-                            "#5b5b52",
-                            "#27333e"
-                        ]
-                    )
-            });
+function generatePark(chunk) {
+    for (
+        let y = BUILD_MIN;
+        y < BUILD_MAX;
+        y++
+    ) {
+        for (
+            let x = BUILD_MIN;
+            x < BUILD_MAX;
+            x++
+        ) {
+            setGround(
+                chunk,
+                x,
+                y,
+                "grass"
+            );
         }
     }
-}
 
-/* =========================================================
-   STREET DETAILS
-========================================================= */
+    const center =
+        Math.floor(
+            (
+                BUILD_MIN +
+                BUILD_MAX
+            ) /
+            2
+        );
 
-function generateStreetProps(
-    chunk
-){
+    /*
+        Park paths.
+    */
 
-    const cx=
-        chunk.cx;
+    for (
+        let i = BUILD_MIN;
+        i < BUILD_MAX;
+        i++
+    ) {
+        setGround(
+            chunk,
+            center,
+            i,
+            "dirt"
+        );
 
-    const cy=
-        chunk.cy;
+        setGround(
+            chunk,
+            center + 1,
+            i,
+            "dirt"
+        );
 
-    if(
-        random01(
-            cx,
-            cy,
-            3000
-        ) < .60
-    ){
+        setGround(
+            chunk,
+            i,
+            center,
+            "dirt"
+        );
 
-        chunk.props.push({
-
-            kind:"hydrant",
-
-            x:
-                ROAD_WIDTH/2 +
-                18,
-
-            y:
-                CHUNK_SIZE*.34,
-
-            w:10,
-            h:10
-        });
+        setGround(
+            chunk,
+            i,
+            center + 1,
+            "dirt"
+        );
     }
 
-    if(
-        random01(
-            cx,
-            cy,
-            3001
-        ) < .45
-    ){
+    for (
+        let i = 0;
+        i < 24;
+        i++
+    ) {
+        const x =
+            randInt(
+                chunk.cx,
+                chunk.cy,
+                800 + i,
+                BUILD_MIN + 2,
+                BUILD_MAX - 3
+            );
 
-        chunk.props.push({
+        const y =
+            randInt(
+                chunk.cx,
+                chunk.cy,
+                900 + i,
+                BUILD_MIN + 2,
+                BUILD_MAX - 3
+            );
 
-            kind:"trash",
+        if (
+            Math.abs(
+                x - center
+            ) < 3 ||
 
-            x:
-                CHUNK_SIZE*.66,
+            Math.abs(
+                y - center
+            ) < 3
+        ) continue;
 
-            y:
-                ROAD_WIDTH/2 +
-                20,
-
-            w:13,
-            h:13
-        });
+        addProp(
+            chunk,
+            "tree",
+            x,
+            y,
+            true
+        );
     }
-}
 
-/* =========================================================
-   COLLISION
-========================================================= */
+    addProp(
+        chunk,
+        "bench",
+        center - 3,
+        center - 2,
+        true
+    );
 
-function worldToChunk(
-    value
-){
-
-    return Math.floor(
-        value /
-        CHUNK_SIZE
+    addProp(
+        chunk,
+        "bench",
+        center + 3,
+        center + 3,
+        true
     );
 }
 
-function intersects(
-    playerBody,
-    object
-){
+/* ============================================================
+   PARKING LOT
+============================================================ */
 
-    return(
+function generateParkingLot(chunk) {
+    for (
+        let y = BUILD_MIN;
+        y < BUILD_MAX;
+        y++
+    ) {
+        for (
+            let x = BUILD_MIN;
+            x < BUILD_MAX;
+            x++
+        ) {
+            setGround(
+                chunk,
+                x,
+                y,
+                "parking"
+            );
+        }
+    }
 
-        playerBody.right >
-        object.x &&
-
-        playerBody.left <
-        object.x +
-        object.w &&
-
-        playerBody.bottom >
-        object.y &&
-
-        playerBody.top <
-        object.y +
-        object.h
-    );
-}
-
-function canMoveTo(
-    x,
-    y
-){
-
-    const body={
-
-        left:
-            x -
-            player.width*.34,
-
-        right:
-            x +
-            player.width*.34,
-
-        top:
-            y -
-            player.height*.27,
-
-        bottom:
-            y +
-            player.height*.27
-    };
-
-    const cx=
-        worldToChunk(x);
-
-    const cy=
-        worldToChunk(y);
-
-    for(
-        let offsetX=-1;
-        offsetX<=1;
-        offsetX++
-    ){
-
-        for(
-            let offsetY=-1;
-            offsetY<=1;
-            offsetY++
-        ){
-
-            const chunk=
-                getChunk(
-                    cx+offsetX,
-                    cy+offsetY
+    for (
+        let y = BUILD_MIN + 4;
+        y < BUILD_MAX - 3;
+        y += 7
+    ) {
+        for (
+            let x = BUILD_MIN + 3;
+            x < BUILD_MAX - 2;
+            x += 5
+        ) {
+            if (
+                rand(
+                    chunk.cx,
+                    chunk.cy,
+                    1100 +
+                    x * 17 +
+                    y
+                ) > .48
+            ) {
+                addProp(
+                    chunk,
+                    "car",
+                    x,
+                    y,
+                    true
                 );
-
-            const baseX=
-                chunk.cx *
-                CHUNK_SIZE;
-
-            const baseY=
-                chunk.cy *
-                CHUNK_SIZE;
-
-            for(
-                const building
-                of chunk.buildings
-            ){
-
-                for(
-                    const wall
-                    of building.walls
-                ){
-
-                    if(
-                        intersects(
-                            body,
-                            {
-                                x:
-                                    baseX +
-                                    wall.x,
-
-                                y:
-                                    baseY +
-                                    wall.y,
-
-                                w:
-                                    wall.w,
-
-                                h:
-                                    wall.h
-                            }
-                        )
-                    )
-                        return false;
-                }
-
-                for(
-                    const wall
-                    of building
-                    .interiorWalls
-                ){
-
-                    if(
-                        intersects(
-                            body,
-                            {
-                                x:
-                                    baseX +
-                                    wall.x,
-
-                                y:
-                                    baseY +
-                                    wall.y,
-
-                                w:
-                                    wall.w,
-
-                                h:
-                                    wall.h
-                            }
-                        )
-                    )
-                        return false;
-                }
-            }
-
-            for(
-                const fence
-                of chunk.fences
-            ){
-
-                if(
-                    intersects(
-                        body,
-                        {
-                            x:
-                                baseX +
-                                fence.x,
-
-                            y:
-                                baseY +
-                                fence.y,
-
-                            w:
-                                fence.w,
-
-                            h:
-                                fence.h
-                        }
-                    )
-                )
-                    return false;
             }
         }
+    }
+}
+
+/* ============================================================
+   STREET FURNITURE
+============================================================ */
+
+function addStreetFurniture(chunk) {
+    if (
+        rand(
+            chunk.cx,
+            chunk.cy,
+            1200
+        ) > .40
+    ) {
+        addProp(
+            chunk,
+            "hydrant",
+            ROAD_TILES + 1,
+            ROAD_TILES + 4,
+            false
+        );
+    }
+
+    if (
+        rand(
+            chunk.cx,
+            chunk.cy,
+            1201
+        ) > .52
+    ) {
+        addProp(
+            chunk,
+            "trash",
+            BUILD_MIN + 2,
+            ROAD_TILES + 1,
+            true
+        );
+    }
+}
+
+/* ============================================================
+   COLLISION
+============================================================ */
+
+function positiveMod(value, divisor) {
+    return (
+        (value % divisor) +
+        divisor
+    ) % divisor;
+}
+
+function isSolidTile(globalTileX, globalTileY) {
+    const cx =
+        Math.floor(
+            globalTileX /
+            CHUNK_TILES
+        );
+
+    const cy =
+        Math.floor(
+            globalTileY /
+            CHUNK_TILES
+        );
+
+    const localX =
+        positiveMod(
+            globalTileX,
+            CHUNK_TILES
+        );
+
+    const localY =
+        positiveMod(
+            globalTileY,
+            CHUNK_TILES
+        );
+
+    const chunk =
+        getChunk(cx, cy);
+
+    return chunk.solid.has(
+        localX + "," + localY
+    );
+}
+
+function solidAtPixel(x, y) {
+    const tx =
+        Math.floor(
+            x / TILE
+        );
+
+    const ty =
+        Math.floor(
+            y / TILE
+        );
+
+    return isSolidTile(
+        tx,
+        ty
+    );
+}
+
+function canMoveTo(x, y) {
+    const halfW =
+        player.width / 2;
+
+    const halfH =
+        player.height / 2;
+
+    const points = [
+        [
+            x - halfW,
+            y - halfH
+        ],
+
+        [
+            x + halfW,
+            y - halfH
+        ],
+
+        [
+            x - halfW,
+            y + halfH
+        ],
+
+        [
+            x + halfW,
+            y + halfH
+        ]
+    ];
+
+    for (
+        const point
+        of points
+    ) {
+        if (
+            solidAtPixel(
+                point[0],
+                point[1]
+            )
+        )
+            return false;
     }
 
     return true;
 }
 
-/* =========================================================
+/* ============================================================
    PLAYER UPDATE
-========================================================= */
+============================================================ */
 
-function updatePlayer(dt){
+function updatePlayer(dt) {
+    let dx = 0;
+    let dy = 0;
 
-    let dx=0;
-    let dy=0;
-
-    if(
+    if (
         keys["w"] ||
         keys["arrowup"]
     )
-        dy--;
+        dy -= 1;
 
-    if(
+    if (
         keys["s"] ||
         keys["arrowdown"]
     )
-        dy++;
+        dy += 1;
 
-    if(
+    if (
         keys["a"] ||
         keys["arrowleft"]
     )
-        dx--;
+        dx -= 1;
 
-    if(
+    if (
         keys["d"] ||
         keys["arrowright"]
     )
-        dx++;
+        dx += 1;
 
-    dx+=joystickX;
-    dy+=joystickY;
+    dx += joyX;
+    dy += joyY;
 
-    const magnitude=
-        Math.hypot(
-            dx,
-            dy
-        );
+    const magnitude =
+        Math.hypot(dx, dy);
 
-    player.moving=
-        magnitude>.05;
+    player.moving =
+        magnitude > .05;
 
-    if(
-        magnitude>1
-    ){
-
-        dx/=magnitude;
-        dy/=magnitude;
+    if (magnitude > 1) {
+        dx /= magnitude;
+        dy /= magnitude;
     }
 
-    if(
+    if (
         Math.abs(dx) >
         Math.abs(dy)
-    ){
+    ) {
+        if (dx > .05)
+            player.facing = "right";
 
-        if(dx>.05)
-            player.direction=
-                "right";
-
-        if(dx<-.05)
-            player.direction=
-                "left";
+        else if (dx < -.05)
+            player.facing = "left";
     }
 
-    else{
+    else {
+        if (dy > .05)
+            player.facing = "down";
 
-        if(dy>.05)
-            player.direction=
-                "down";
-
-        if(dy<-.05)
-            player.direction=
-                "up";
+        else if (dy < -.05)
+            player.facing = "up";
     }
 
-    const sprinting=
-
+    const sprinting =
         (
             keys["shift"] ||
             sprintTouch
         ) &&
-
         player.moving &&
+        player.stamina > 0;
 
-        player.stamina>0;
-
-    const speed=
-
+    const speed =
         sprinting
+            ? player.sprintSpeed
+            : player.walkSpeed;
 
-        ? player.sprintSpeed
+    if (sprinting) {
+        player.stamina -=
+            23 * dt;
+    }
 
-        : player.walkSpeed;
+    else {
+        player.stamina +=
+            13 * dt;
+    }
 
-    player.stamina +=
-
-        (
-            sprinting
-            ? -22
-            : 14
-        ) *
-
-        dt;
-
-    player.stamina=
+    player.stamina =
         Math.max(
             0,
             Math.min(
@@ -2738,1396 +2616,121 @@ function updatePlayer(dt){
             )
         );
 
-    const nextX=
-
+    const nextX =
         player.x +
         dx *
         speed *
         dt;
 
-    if(
+    if (
         canMoveTo(
             nextX,
             player.y
         )
-    ){
-
-        player.x=
+    ) {
+        player.x =
             nextX;
     }
 
-    const nextY=
-
+    const nextY =
         player.y +
         dy *
         speed *
         dt;
 
-    if(
+    if (
         canMoveTo(
             player.x,
             nextY
         )
-    ){
-
-        player.y=
+    ) {
+        player.y =
             nextY;
     }
 
-    staminaBar.style.width=
-
+    staminaBar.style.width =
         (
             player.stamina /
             player.maxStamina *
             100
-        ) +
-        "%";
+        ) + "%";
 
-    const chunk=
-        getChunk(
-            worldToChunk(
-                player.x
-            ),
-
-            worldToChunk(
-                player.y
-            )
-        );
-
-    districtLabel.textContent=
-
-        chunk.type
-        .toUpperCase() +
-
-        " BLOCK";
+    updateAreaLabel();
 }
 
-/* =========================================================
+function updateAreaLabel() {
+    const cx =
+        Math.floor(
+            player.x /
+            CHUNK_WORLD_SIZE
+        );
+
+    const cy =
+        Math.floor(
+            player.y /
+            CHUNK_WORLD_SIZE
+        );
+
+    const chunk =
+        getChunk(cx, cy);
+
+    areaLabel.textContent =
+        "NEW DAWN CITY • " +
+        chunk.district.toUpperCase();
+}
+
+/* ============================================================
    CAMERA
-========================================================= */
+============================================================ */
 
-function updateCamera(dt){
-
-    const smoothing=
+function updateCamera(dt) {
+    const follow =
         Math.min(
             1,
-            dt*7
+            dt * 8
         );
 
     camera.x +=
-
         (
             player.x -
             camera.x
         ) *
-
-        smoothing;
+        follow;
 
     camera.y +=
-
         (
             player.y -
             camera.y
         ) *
-
-        smoothing;
+        follow;
 }
 
-/* =========================================================
-   DRAW HELPERS
-========================================================= */
+/* ============================================================
+   SCREEN HELPERS
+============================================================ */
 
-function screenX(
-    worldX
-){
-
-    return(
-
+function screenX(worldX) {
+    return (
         worldX -
         camera.x +
-        screenWidth/2
+        screenWidth / 2
     );
 }
 
-function screenY(
-    worldY
-){
-
-    return(
-
+function screenY(worldY) {
+    return (
         worldY -
         camera.y +
-        screenHeight/2
+        screenHeight / 2
     );
 }
 
-function fillWorld(
-    x,
-    y,
-    width,
-    height,
-    color
-){
-
-    ctx.fillStyle=
-        color;
-
-    ctx.fillRect(
-
-        Math.floor(
-            screenX(x)
-        ),
-
-        Math.floor(
-            screenY(y)
-        ),
-
-        Math.ceil(width),
-
-        Math.ceil(height)
-    );
-}
-
-function strokeWorld(
-    x,
-    y,
-    width,
-    height,
-    color
-){
-
-    ctx.strokeStyle=
-        color;
-
-    ctx.lineWidth=1;
-
-    ctx.strokeRect(
-
-        Math.floor(
-            screenX(x)
-        ),
-
-        Math.floor(
-            screenY(y)
-        ),
-
-        width,
-        height
-    );
-}
-
-/* =========================================================
-   DRAW CHUNK
-========================================================= */
-
-function drawChunk(
-    chunk
-){
-
-    const baseX=
-
-        chunk.cx *
-        CHUNK_SIZE;
-
-    const baseY=
-
-        chunk.cy *
-        CHUNK_SIZE;
-
-    fillWorld(
-        baseX,
-        baseY,
-        CHUNK_SIZE,
-        CHUNK_SIZE,
-        "#242627"
-    );
-
-    drawRoads(
-        baseX,
-        baseY
-    );
-
-    drawLotGround(
-        chunk,
-        baseX,
-        baseY
-    );
-
-    for(
-        const building
-        of chunk.buildings
-    ){
-
-        drawBuilding(
-            building,
-            baseX,
-            baseY
-        );
-    }
-
-    for(
-        const fence
-        of chunk.fences
-    ){
-
-        drawFence(
-            fence,
-            baseX,
-            baseY
-        );
-    }
-
-    for(
-        const prop
-        of chunk.props
-    ){
-
-        drawProp(
-            prop,
-            baseX,
-            baseY
-        );
-    }
-
-    for(
-        const tree
-        of chunk.trees
-    ){
-
-        drawTree(
-            tree,
-            baseX,
-            baseY
-        );
-    }
-}
-
-/* =========================================================
-   WIDE STREETS
-========================================================= */
-
-function drawRoads(
-    baseX,
-    baseY
-){
-
-    const half=
-        ROAD_WIDTH/2;
-
-    /*
-        Vertical road
-    */
-
-    fillWorld(
-        baseX-half,
-        baseY,
-        ROAD_WIDTH,
-        CHUNK_SIZE,
-        "#151719"
-    );
-
-    /*
-        Horizontal road
-    */
-
-    fillWorld(
-        baseX,
-        baseY-half,
-        CHUNK_SIZE,
-        ROAD_WIDTH,
-        "#151719"
-    );
-
-    /*
-        Sidewalks on both sides
-        of vertical street
-    */
-
-    fillWorld(
-        baseX+half,
-        baseY,
-        SIDEWALK_WIDTH,
-        CHUNK_SIZE,
-        "#66645f"
-    );
-
-    fillWorld(
-        baseX-half-SIDEWALK_WIDTH,
-        baseY,
-        SIDEWALK_WIDTH,
-        CHUNK_SIZE,
-        "#66645f"
-    );
-
-    /*
-        Sidewalks on both sides
-        of horizontal street
-    */
-
-    fillWorld(
-        baseX,
-        baseY+half,
-        CHUNK_SIZE,
-        SIDEWALK_WIDTH,
-        "#66645f"
-    );
-
-    fillWorld(
-        baseX,
-        baseY-half-SIDEWALK_WIDTH,
-        CHUNK_SIZE,
-        SIDEWALK_WIDTH,
-        "#66645f"
-    );
-
-    /*
-        Curbs
-    */
-
-    fillWorld(
-        baseX+half,
-        baseY,
-        CURB_WIDTH,
-        CHUNK_SIZE,
-        "#8a877e"
-    );
-
-    fillWorld(
-        baseX-half-CURB_WIDTH,
-        baseY,
-        CURB_WIDTH,
-        CHUNK_SIZE,
-        "#8a877e"
-    );
-
-    fillWorld(
-        baseX,
-        baseY+half,
-        CHUNK_SIZE,
-        CURB_WIDTH,
-        "#8a877e"
-    );
-
-    fillWorld(
-        baseX,
-        baseY-half-CURB_WIDTH,
-        CHUNK_SIZE,
-        CURB_WIDTH,
-        "#8a877e"
-    );
-
-    /*
-        Center yellow markings
-    */
-
-    for(
-        let i=120;
-        i<CHUNK_SIZE;
-        i+=95
-    ){
-
-        fillWorld(
-            baseX-2,
-            baseY+i,
-            4,
-            42,
-            "#b0a65f"
-        );
-
-        fillWorld(
-            baseX+i,
-            baseY-2,
-            42,
-            4,
-            "#b0a65f"
-        );
-    }
-
-    /*
-        Lane separators
-    */
-
-    fillWorld(
-        baseX-half*.52,
-        baseY,
-        2,
-        CHUNK_SIZE,
-        "#77766c"
-    );
-
-    fillWorld(
-        baseX+half*.52,
-        baseY,
-        2,
-        CHUNK_SIZE,
-        "#77766c"
-    );
-
-    fillWorld(
-        baseX,
-        baseY-half*.52,
-        CHUNK_SIZE,
-        2,
-        "#77766c"
-    );
-
-    fillWorld(
-        baseX,
-        baseY+half*.52,
-        CHUNK_SIZE,
-        2,
-        "#77766c"
-    );
-
-    /*
-        Crosswalk
-    */
-
-    for(
-        let i=0;
-        i<6;
-        i++
-    ){
-
-        fillWorld(
-            baseX+
-            half+
-            12+
-            i*12,
-
-            baseY+
-            half-
-            30,
-
-            7,
-            27,
-            "#b8b8ad"
-        );
-
-        fillWorld(
-            baseX+
-            half-
-            30,
-
-            baseY+
-            half+
-            12+
-            i*12,
-
-            27,
-            7,
-            "#b8b8ad"
-        );
-    }
-}
-
-/* =========================================================
-   LOT GROUND
-========================================================= */
-
-function drawLotGround(
-    chunk,
-    baseX,
-    baseY
-){
-
-    const bounds=
-        getLotBounds();
-
-    if(
-        chunk.type ===
-        "park"
-    ){
-
-        fillWorld(
-
-            baseX+
-            bounds.min,
-
-            baseY+
-            bounds.min,
-
-            bounds.size,
-            bounds.size,
-
-            "#263a28"
-        );
-
-        fillWorld(
-
-            baseX+
-            CHUNK_SIZE/2-
-            10,
-
-            baseY+
-            bounds.min,
-
-            20,
-            bounds.size,
-
-            "#77705f"
-        );
-
-        fillWorld(
-
-            baseX+
-            bounds.min,
-
-            baseY+
-            CHUNK_SIZE/2-
-            10,
-
-            bounds.size,
-            20,
-
-            "#77705f"
-        );
-    }
-
-    else if(
-        chunk.type ===
-        "parking"
-    ){
-
-        fillWorld(
-
-            baseX+
-            bounds.min,
-
-            baseY+
-            bounds.min,
-
-            bounds.size,
-            bounds.size,
-
-            "#2b2d2e"
-        );
-
-        for(
-            let x=
-                bounds.min+
-                50;
-
-            x<
-                bounds.max-
-                20;
-
-            x+=105
-        ){
-
-            fillWorld(
-
-                baseX+x,
-
-                baseY+
-                bounds.min+
-                20,
-
-                3,
-
-                bounds.size-
-                40,
-
-                "#8d8a78"
-            );
-        }
-    }
-
-    else if(
-        chunk.type ===
-        "industrial"
-    ){
-
-        fillWorld(
-
-            baseX+
-            bounds.min,
-
-            baseY+
-            bounds.min,
-
-            bounds.size,
-            bounds.size,
-
-            "#343536"
-        );
-    }
-
-    else{
-
-        fillWorld(
-
-            baseX+
-            bounds.min,
-
-            baseY+
-            bounds.min,
-
-            bounds.size,
-            bounds.size,
-
-            "#353534"
-        );
-    }
-}
-
-/* =========================================================
-   BUILDINGS
-========================================================= */
-
-function drawBuilding(
-    building,
-    baseX,
-    baseY
-){
-
-    const palette=
-
-        BUILDING_TYPES[
-            building.type
-        ];
-
-    const x=
-        baseX+
-        building.x;
-
-    const y=
-        baseY+
-        building.y;
-
-    /*
-        Shadow
-    */
-
-    fillWorld(
-
-        x-5,
-        y+6,
-
-        building.w,
-        building.h,
-
-        "rgba(0,0,0,.45)"
-    );
-
-    /*
-        Interior floor
-    */
-
-    fillWorld(
-
-        x,
-        y,
-
-        building.w,
-        building.h,
-
-        palette.floor
-    );
-
-    /*
-        Tile grid
-    */
-
-    ctx.globalAlpha=.12;
-
-    for(
-        let gx=16;
-        gx<building.w;
-        gx+=24
-    ){
-
-        fillWorld(
-            x+gx,
-            y,
-            1,
-            building.h,
-            "#111"
-        );
-    }
-
-    for(
-        let gy=16;
-        gy<building.h;
-        gy+=24
-    ){
-
-        fillWorld(
-            x,
-            y+gy,
-            building.w,
-            1,
-            "#111"
-        );
-    }
-
-    ctx.globalAlpha=1;
-
-    /*
-        Exterior walls
-    */
-
-    for(
-        const wall
-        of building.walls
-    ){
-
-        fillWorld(
-
-            baseX+
-            wall.x,
-
-            baseY+
-            wall.y,
-
-            wall.w,
-            wall.h,
-
-            palette.wall
-        );
-    }
-
-    /*
-        Interior walls
-    */
-
-    for(
-        const wall
-        of building
-        .interiorWalls
-    ){
-
-        fillWorld(
-
-            baseX+
-            wall.x,
-
-            baseY+
-            wall.y,
-
-            wall.w,
-            wall.h,
-
-            "#3a3936"
-        );
-    }
-
-    /*
-        Windows
-    */
-
-    for(
-        const windowPart
-        of building.windows
-    ){
-
-        fillWorld(
-
-            baseX+
-            windowPart.x,
-
-            baseY+
-            windowPart.y,
-
-            windowPart.w,
-            windowPart.h,
-
-            "#7da0a4"
-        );
-    }
-
-    /*
-        Door opening marker
-    */
-
-    let doorX=x;
-    let doorY=y;
-
-    let doorWidth=0;
-    let doorHeight=0;
-
-    if(
-        building.doorSide===0
-    ){
-
-        doorX=
-
-            x+
-            building.doorOffset-
-            building.doorSize/2;
-
-        doorY=y-2;
-
-        doorWidth=
-            building.doorSize;
-
-        doorHeight=6;
-    }
-
-    if(
-        building.doorSide===1
-    ){
-
-        doorX=
-            x+
-            building.w-
-            4;
-
-        doorY=
-
-            y+
-            building.doorOffset-
-            building.doorSize/2;
-
-        doorWidth=6;
-
-        doorHeight=
-            building.doorSize;
-    }
-
-    if(
-        building.doorSide===2
-    ){
-
-        doorX=
-
-            x+
-            building.doorOffset-
-            building.doorSize/2;
-
-        doorY=
-
-            y+
-            building.h-
-            4;
-
-        doorWidth=
-            building.doorSize;
-
-        doorHeight=6;
-    }
-
-    if(
-        building.doorSide===3
-    ){
-
-        doorX=x-2;
-
-        doorY=
-
-            y+
-            building.doorOffset-
-            building.doorSize/2;
-
-        doorWidth=6;
-
-        doorHeight=
-            building.doorSize;
-    }
-
-    fillWorld(
-
-        doorX,
-        doorY,
-
-        doorWidth,
-        doorHeight,
-
-        palette.accent
-    );
-
-    /*
-        Furniture
-    */
-
-    for(
-        const prop
-        of building.props
-    ){
-
-        drawInteriorProp(
-            prop,
-            baseX,
-            baseY
-        );
-    }
-
-    /*
-        Building type label
-    */
-
-    const textX=
-        screenX(
-            x+
-            building.w/2
-        );
-
-    const textY=
-        screenY(
-            y+15
-        );
-
-    if(
-        textX>-100 &&
-        textX<screenWidth+100 &&
-        textY>-30 &&
-        textY<screenHeight+30
-    ){
-
-        ctx.fillStyle=
-            palette.accent;
-
-        ctx.font=
-            "bold 9px Arial";
-
-        ctx.textAlign=
-            "center";
-
-        ctx.fillText(
-
-            building.sign,
-
-            textX,
-            textY
-        );
-    }
-}
-
-/* =========================================================
-   INTERIOR OBJECTS
-========================================================= */
-
-function drawInteriorProp(
-    prop,
-    baseX,
-    baseY
-){
-
-    const colors={
-
-        shelf:"#40372e",
-
-        counter:"#4b4033",
-
-        table:"#554636",
-
-        bed:"#6e6257",
-
-        sofa:"#514b44",
-
-        desk:"#4a4138"
-    };
-
-    fillWorld(
-
-        baseX+
-        prop.x,
-
-        baseY+
-        prop.y,
-
-        prop.w,
-        prop.h,
-
-        colors[
-            prop.kind
-        ] ||
-        "#4b443b"
-    );
-
-    strokeWorld(
-
-        baseX+
-        prop.x,
-
-        baseY+
-        prop.y,
-
-        prop.w,
-        prop.h,
-
-        "rgba(0,0,0,.35)"
-    );
-}
-
-/* =========================================================
-   FENCES
-========================================================= */
-
-function drawFence(
-    fence,
-    baseX,
-    baseY
-){
-
-    fillWorld(
-
-        baseX+
-        fence.x,
-
-        baseY+
-        fence.y,
-
-        fence.w,
-        fence.h,
-
-        "#77786f"
-    );
-
-    if(
-        fence.w >
-        fence.h
-    ){
-
-        for(
-            let x=4;
-            x<fence.w;
-            x+=14
-        ){
-
-            fillWorld(
-
-                baseX+
-                fence.x+
-                x,
-
-                baseY+
-                fence.y,
-
-                2,
-                fence.h,
-
-                "#9a9b91"
-            );
-        }
-    }
-
-    else{
-
-        for(
-            let y=4;
-            y<fence.h;
-            y+=14
-        ){
-
-            fillWorld(
-
-                baseX+
-                fence.x,
-
-                baseY+
-                fence.y+
-                y,
-
-                fence.w,
-                2,
-
-                "#9a9b91"
-            );
-        }
-    }
-}
-
-/* =========================================================
-   WORLD PROPS
-========================================================= */
-
-function drawProp(
-    prop,
-    baseX,
-    baseY
-){
-
-    const x=
-        baseX+
-        prop.x;
-
-    const y=
-        baseY+
-        prop.y;
-
-    if(
-        prop.kind ===
-        "car"
-    ){
-
-        fillWorld(
-            x-3,
-            y+4,
-            prop.w,
-            prop.h,
-            "rgba(0,0,0,.35)"
-        );
-
-        fillWorld(
-            x,
-            y,
-            prop.w,
-            prop.h,
-            prop.tint
-        );
-
-        fillWorld(
-            x+6,
-            y+14,
-            prop.w-12,
-            18,
-            "#1b2428"
-        );
-
-        fillWorld(
-            x+6,
-            y+prop.h-31,
-            prop.w-12,
-            18,
-            "#1b2428"
-        );
-
-        return;
-    }
-
-    const colors={
-
-        dumpster:"#334b3b",
-
-        crate:"#705537",
-
-        hydrant:"#8e3d32",
-
-        trash:"#303336",
-
-        bench:"#665038"
-    };
-
-    fillWorld(
-
-        x,
-        y,
-
-        prop.w,
-        prop.h,
-
-        colors[
-            prop.kind
-        ] ||
-        "#555"
-    );
-}
-
-/* =========================================================
-   TREES
-========================================================= */
-
-function drawTree(
-    tree,
-    baseX,
-    baseY
-){
-
-    const x=
-        screenX(
-            baseX+
-            tree.x
-        );
-
-    const y=
-        screenY(
-            baseY+
-            tree.y
-        );
-
-    ctx.fillStyle=
-        "rgba(0,0,0,.35)";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        x+4,
-        y+5,
-        tree.size/2,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-
-    ctx.fillStyle=
-        "#355d35";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        x,
-        y,
-        tree.size/2,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-
-    ctx.fillStyle=
-        "#496f42";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        x-5,
-        y-5,
-        tree.size*.28,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-}
-
-/* =========================================================
-   PLAYER SPRITE
-========================================================= */
-
-function drawPlayer(){
-
-    const x=
-        Math.floor(
-            screenWidth/2
-        );
-
-    const y=
-        Math.floor(
-            screenHeight/2
-        );
-
-    ctx.fillStyle=
-        "rgba(0,0,0,.45)";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        x,
-        y+13,
-        10,
-        5,
-        0,
-        0,
-        Math.PI*2
-    );
-
-    ctx.fill();
-
-    /*
-        Legs
-    */
-
-    ctx.fillStyle=
-        "#25292d";
-
-    ctx.fillRect(
-        x-7,
-        y+4,
-        5,
-        11
-    );
-
-    ctx.fillRect(
-        x+2,
-        y+4,
-        5,
-        11
-    );
-
-    /*
-        Shirt
-    */
-
-    ctx.fillStyle=
-        "#46515a";
-
-    ctx.fillRect(
-        x-9,
-        y-9,
-        18,
-        16
-    );
-
-    /*
-        Head
-    */
-
-    ctx.fillStyle=
-        "#a77958";
-
-    ctx.fillRect(
-        x-6,
-        y-19,
-        12,
-        11
-    );
-
-    /*
-        Hair
-    */
-
-    ctx.fillStyle=
-        "#201c19";
-
-    ctx.fillRect(
-        x-6,
-        y-20,
-        12,
-        4
-    );
-
-    /*
-        Facing marker
-    */
-
-    ctx.fillStyle=
-        "#d2d0bd";
-
-    let faceX=x;
-    let faceY=y;
-
-    if(
-        player.direction ===
-        "up"
-    )
-        faceY-=25;
-
-    if(
-        player.direction ===
-        "down"
-    )
-        faceY+=21;
-
-    if(
-        player.direction ===
-        "left"
-    )
-        faceX-=15;
-
-    if(
-        player.direction ===
-        "right"
-    )
-        faceX+=15;
-
-    ctx.fillRect(
-        faceX-2,
-        faceY-2,
-        4,
-        4
-    );
-}
-
-/* =========================================================
-   WORLD DRAW
-========================================================= */
-
-function drawWorld(){
-
-    ctx.fillStyle=
-        "#0f1112";
+/* ============================================================
+   DRAW WORLD
+============================================================ */
+
+function drawWorld() {
+    ctx.fillStyle = "#101214";
 
     ctx.fillRect(
         0,
@@ -4136,34 +2739,43 @@ function drawWorld(){
         screenHeight
     );
 
-    const chunkX=
-        worldToChunk(
-            camera.x
+    const centerChunkX =
+        Math.floor(
+            camera.x /
+            CHUNK_WORLD_SIZE
         );
 
-    const chunkY=
-        worldToChunk(
-            camera.y
+    const centerChunkY =
+        Math.floor(
+            camera.y /
+            CHUNK_WORLD_SIZE
         );
 
-    for(
-        let x=-VIEW_DISTANCE;
-        x<=VIEW_DISTANCE;
-        x++
-    ){
+    /*
+        3x3 chunks is plenty because
+        each chunk is now huge.
+    */
 
-        for(
-            let y=-VIEW_DISTANCE;
-            y<=VIEW_DISTANCE;
-            y++
-        ){
+    for (
+        let cy =
+            centerChunkY - 1;
 
+        cy <=
+            centerChunkY + 1;
+
+        cy++
+    ) {
+        for (
+            let cx =
+                centerChunkX - 1;
+
+            cx <=
+                centerChunkX + 1;
+
+            cx++
+        ) {
             drawChunk(
-
-                getChunk(
-                    chunkX+x,
-                    chunkY+y
-                )
+                getChunk(cx, cy)
             );
         }
     }
@@ -4171,32 +2783,1372 @@ function drawWorld(){
     drawPlayer();
 }
 
-/* =========================================================
+/* ============================================================
+   DRAW CHUNK
+============================================================ */
+
+function drawChunk(chunk) {
+    const originX =
+        chunk.cx *
+        CHUNK_WORLD_SIZE;
+
+    const originY =
+        chunk.cy *
+        CHUNK_WORLD_SIZE;
+
+    for (
+        let y = 0;
+        y < CHUNK_TILES;
+        y++
+    ) {
+        for (
+            let x = 0;
+            x < CHUNK_TILES;
+            x++
+        ) {
+            const worldX =
+                originX +
+                x * TILE;
+
+            const worldY =
+                originY +
+                y * TILE;
+
+            const sx =
+                screenX(worldX);
+
+            const sy =
+                screenY(worldY);
+
+            if (
+                sx < -TILE ||
+                sy < -TILE ||
+                sx >
+                    screenWidth +
+                    TILE ||
+
+                sy >
+                    screenHeight +
+                    TILE
+            )
+                continue;
+
+            const ground =
+                chunk.ground[
+                    tileIndex(x, y)
+                ];
+
+            drawGroundTile(
+                ground,
+                sx,
+                sy,
+                x,
+                y,
+                chunk
+            );
+        }
+    }
+
+    /*
+        Buildings / walls.
+    */
+
+    for (
+        let y = 0;
+        y < CHUNK_TILES;
+        y++
+    ) {
+        for (
+            let x = 0;
+            x < CHUNK_TILES;
+            x++
+        ) {
+            const overlay =
+                chunk.overlay[
+                    tileIndex(x, y)
+                ];
+
+            if (!overlay)
+                continue;
+
+            const sx =
+                screenX(
+                    originX +
+                    x * TILE
+                );
+
+            const sy =
+                screenY(
+                    originY +
+                    y * TILE
+                );
+
+            if (
+                sx < -TILE ||
+                sy < -TILE ||
+                sx >
+                    screenWidth +
+                    TILE ||
+
+                sy >
+                    screenHeight +
+                    TILE
+            )
+                continue;
+
+            drawOverlayTile(
+                overlay,
+                sx,
+                sy
+            );
+        }
+    }
+
+    /*
+        Furniture / vehicles / trees.
+    */
+
+    for (
+        const prop
+        of chunk.props
+    ) {
+        drawProp(
+            prop,
+            originX,
+            originY
+        );
+    }
+}
+
+/* ============================================================
+   GROUND TILES
+============================================================ */
+
+function drawGroundTile(
+    type,
+    sx,
+    sy,
+    lx,
+    ly,
+    chunk
+) {
+    const gx =
+        chunk.cx *
+        CHUNK_TILES +
+        lx;
+
+    const gy =
+        chunk.cy *
+        CHUNK_TILES +
+        ly;
+
+    if (type === "road") {
+        ctx.fillStyle =
+            COLORS.road;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE + 1,
+            TILE + 1
+        );
+
+        /*
+            Grit / road patches.
+        */
+
+        if (
+            hash(
+                gx,
+                gy,
+                4000
+            ) % 13 === 0
+        ) {
+            ctx.fillStyle =
+                "#242627";
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 7,
+                10,
+                3
+            );
+        }
+
+        drawRoadMarkings(
+            sx,
+            sy,
+            lx,
+            ly,
+            gx,
+            gy
+        );
+
+        return;
+    }
+
+    if (type === "sidewalk") {
+        ctx.fillStyle =
+            (
+                gx + gy
+            ) % 2 === 0
+                ? COLORS.sidewalkA
+                : COLORS.sidewalkB;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE + 1,
+            TILE + 1
+        );
+
+        ctx.strokeStyle =
+            "rgba(20,20,20,.16)";
+
+        ctx.lineWidth = 1;
+
+        ctx.strokeRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        return;
+    }
+
+    if (type === "grass") {
+        ctx.fillStyle =
+            hash(
+                gx,
+                gy,
+                5000
+            ) % 2 === 0
+                ? COLORS.grassA
+                : COLORS.grassB;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE + 1,
+            TILE + 1
+        );
+
+        return;
+    }
+
+    const groundColors = {
+        empty:
+            COLORS.emptyLot,
+
+        dirt:
+            COLORS.dirt,
+
+        gravel:
+            COLORS.gravel,
+
+        parking:
+            COLORS.parking,
+
+        floorHouse:
+            COLORS.floorHouse,
+
+        floorApartment:
+            COLORS.floorApartment,
+
+        floorStore:
+            COLORS.floorStore,
+
+        floorClinic:
+            COLORS.floorClinic,
+
+        floorOffice:
+            COLORS.floorOffice,
+
+        floorWarehouse:
+            COLORS.floorWarehouse
+    };
+
+    ctx.fillStyle =
+        groundColors[type] ||
+        COLORS.emptyLot;
+
+    ctx.fillRect(
+        sx,
+        sy,
+        TILE + 1,
+        TILE + 1
+    );
+
+    /*
+        Floor tile seams inside buildings.
+    */
+
+    if (
+        type.startsWith("floor")
+    ) {
+        ctx.strokeStyle =
+            "rgba(20,20,20,.09)";
+
+        ctx.strokeRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+    }
+
+    /*
+        Parking lines.
+    */
+
+    if (
+        type === "parking" &&
+        gx % 5 === 0
+    ) {
+        ctx.fillStyle =
+            "#8b8876";
+
+        ctx.fillRect(
+            sx + 2,
+            sy,
+            2,
+            TILE
+        );
+    }
+}
+
+/* ============================================================
+   ROAD MARKINGS
+============================================================ */
+
+function drawRoadMarkings(
+    sx,
+    sy,
+    lx,
+    ly,
+    gx,
+    gy
+) {
+    const center =
+        ROAD_TILES / 2;
+
+    /*
+        Intersection itself remains mostly clean.
+    */
+
+    const intersection =
+        lx < ROAD_TILES &&
+        ly < ROAD_TILES;
+
+    if (intersection) {
+        /*
+            Crosswalk stripes.
+        */
+
+        if (
+            ly >=
+                ROAD_TILES - 2 &&
+            lx % 2 === 0
+        ) {
+            ctx.fillStyle =
+                "#b4b4aa";
+
+            ctx.fillRect(
+                sx + 3,
+                sy + 3,
+                TILE - 6,
+                7
+            );
+        }
+
+        if (
+            lx >=
+                ROAD_TILES - 2 &&
+            ly % 2 === 0
+        ) {
+            ctx.fillStyle =
+                "#b4b4aa";
+
+            ctx.fillRect(
+                sx + 3,
+                sy + 3,
+                7,
+                TILE - 6
+            );
+        }
+
+        return;
+    }
+
+    /*
+        Vertical road.
+    */
+
+    if (
+        lx < ROAD_TILES
+    ) {
+        if (
+            lx ===
+                Math.floor(center)
+        ) {
+            ctx.fillStyle =
+                "#b3a354";
+
+            ctx.fillRect(
+                sx + 3,
+                sy,
+                2,
+                TILE
+            );
+
+            ctx.fillRect(
+                sx + 8,
+                sy,
+                2,
+                TILE
+            );
+        }
+
+        /*
+            White dashed lane separators.
+        */
+
+        if (
+            (
+                lx === 2 ||
+                lx === 7
+            ) &&
+            gy % 3 !== 1
+        ) {
+            ctx.fillStyle =
+                "#7a7a74";
+
+            ctx.fillRect(
+                sx + TILE / 2,
+                sy + 4,
+                2,
+                TILE - 8
+            );
+        }
+    }
+
+    /*
+        Horizontal road.
+    */
+
+    if (
+        ly < ROAD_TILES
+    ) {
+        if (
+            ly ===
+                Math.floor(center)
+        ) {
+            ctx.fillStyle =
+                "#b3a354";
+
+            ctx.fillRect(
+                sx,
+                sy + 3,
+                TILE,
+                2
+            );
+
+            ctx.fillRect(
+                sx,
+                sy + 8,
+                TILE,
+                2
+            );
+        }
+
+        if (
+            (
+                ly === 2 ||
+                ly === 7
+            ) &&
+            gx % 3 !== 1
+        ) {
+            ctx.fillStyle =
+                "#7a7a74";
+
+            ctx.fillRect(
+                sx + 4,
+                sy + TILE / 2,
+                TILE - 8,
+                2
+            );
+        }
+    }
+}
+
+/* ============================================================
+   WALL / WINDOW / DOOR TILES
+============================================================ */
+
+function drawOverlayTile(
+    type,
+    sx,
+    sy
+) {
+    if (
+        type === "wallBrick"
+    ) {
+        ctx.fillStyle =
+            COLORS.wallBrick;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        ctx.fillStyle =
+            "#594a3f";
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            4
+        );
+
+        ctx.strokeStyle =
+            "rgba(20,10,5,.25)";
+
+        ctx.strokeRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        return;
+    }
+
+    if (
+        type === "wallConcrete"
+    ) {
+        ctx.fillStyle =
+            COLORS.wallConcrete;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        ctx.fillStyle =
+            "#5b5d5a";
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            4
+        );
+
+        return;
+    }
+
+    if (
+        type === "wallLight"
+    ) {
+        ctx.fillStyle =
+            COLORS.wallLight;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        ctx.fillStyle =
+            "#6c6961";
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            4
+        );
+
+        return;
+    }
+
+    if (
+        type === "windowH"
+    ) {
+        ctx.fillStyle =
+            COLORS.wallBrick;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        ctx.fillStyle =
+            COLORS.window;
+
+        ctx.fillRect(
+            sx + 3,
+            sy + 9,
+            TILE - 6,
+            6
+        );
+
+        ctx.fillStyle =
+            "#252b2c";
+
+        ctx.fillRect(
+            sx + TILE / 2 - 1,
+            sy + 9,
+            2,
+            6
+        );
+
+        return;
+    }
+
+    if (
+        type === "windowV"
+    ) {
+        ctx.fillStyle =
+            COLORS.wallBrick;
+
+        ctx.fillRect(
+            sx,
+            sy,
+            TILE,
+            TILE
+        );
+
+        ctx.fillStyle =
+            COLORS.window;
+
+        ctx.fillRect(
+            sx + 9,
+            sy + 3,
+            6,
+            TILE - 6
+        );
+
+        return;
+    }
+
+    if (
+        type === "door"
+    ) {
+        ctx.fillStyle =
+            "#302821";
+
+        ctx.fillRect(
+            sx + 4,
+            sy + 4,
+            TILE - 8,
+            TILE - 8
+        );
+
+        ctx.fillStyle =
+            COLORS.door;
+
+        ctx.fillRect(
+            sx + 7,
+            sy + 7,
+            TILE - 14,
+            TILE - 14
+        );
+
+        return;
+    }
+
+    if (
+        type === "fence"
+    ) {
+        ctx.strokeStyle =
+            COLORS.fence;
+
+        ctx.lineWidth = 3;
+
+        ctx.strokeRect(
+            sx + 4,
+            sy + 4,
+            TILE - 8,
+            TILE - 8
+        );
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            sx + 4,
+            sy + 4
+        );
+
+        ctx.lineTo(
+            sx + TILE - 4,
+            sy + TILE - 4
+        );
+
+        ctx.moveTo(
+            sx + TILE - 4,
+            sy + 4
+        );
+
+        ctx.lineTo(
+            sx + 4,
+            sy + TILE - 4
+        );
+
+        ctx.stroke();
+    }
+}
+
+/* ============================================================
+   PROPS
+============================================================ */
+
+function drawProp(
+    prop,
+    originX,
+    originY
+) {
+    const worldX =
+        originX +
+        prop.x * TILE;
+
+    const worldY =
+        originY +
+        prop.y * TILE;
+
+    const sx =
+        screenX(worldX);
+
+    const sy =
+        screenY(worldY);
+
+    if (
+        sx < -TILE ||
+        sy < -TILE ||
+        sx > screenWidth + TILE ||
+        sy > screenHeight + TILE
+    )
+        return;
+
+    switch (prop.kind) {
+        case "bed":
+        case "medicalBed":
+            ctx.fillStyle =
+                prop.kind === "medicalBed"
+                    ? "#c2c7be"
+                    : COLORS.bed;
+
+            ctx.fillRect(
+                sx + 3,
+                sy + 3,
+                TILE - 6,
+                TILE - 6
+            );
+
+            ctx.fillStyle =
+                "#dedbd0";
+
+            ctx.fillRect(
+                sx + 5,
+                sy + 4,
+                TILE - 10,
+                6
+            );
+            break;
+
+        case "sofa":
+            ctx.fillStyle =
+                COLORS.sofa;
+
+            ctx.fillRect(
+                sx + 2,
+                sy + 6,
+                TILE - 4,
+                TILE - 9
+            );
+
+            ctx.fillStyle =
+                "#72665a";
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 8,
+                TILE - 8,
+                5
+            );
+            break;
+
+        case "table":
+            ctx.fillStyle =
+                COLORS.table;
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 4,
+                TILE - 8,
+                TILE - 8
+            );
+            break;
+
+        case "chair":
+            ctx.fillStyle =
+                "#514335";
+
+            ctx.fillRect(
+                sx + 8,
+                sy + 8,
+                8,
+                8
+            );
+            break;
+
+        case "desk":
+            ctx.fillStyle =
+                COLORS.desk;
+
+            ctx.fillRect(
+                sx + 3,
+                sy + 6,
+                TILE - 6,
+                12
+            );
+
+            ctx.fillStyle =
+                "#24282a";
+
+            ctx.fillRect(
+                sx + 8,
+                sy + 8,
+                8,
+                5
+            );
+            break;
+
+        case "shelf":
+        case "medicalShelf":
+        case "warehouseRack":
+            ctx.fillStyle =
+                prop.kind === "medicalShelf"
+                    ? "#7b8178"
+                    : COLORS.shelf;
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 3,
+                TILE - 8,
+                TILE - 6
+            );
+
+            ctx.fillStyle =
+                "#2c2925";
+
+            ctx.fillRect(
+                sx + 6,
+                sy + 8,
+                TILE - 12,
+                2
+            );
+
+            ctx.fillRect(
+                sx + 6,
+                sy + 14,
+                TILE - 12,
+                2
+            );
+            break;
+
+        case "counter":
+            ctx.fillStyle =
+                COLORS.counter;
+
+            ctx.fillRect(
+                sx + 2,
+                sy + 5,
+                TILE - 4,
+                TILE - 10
+            );
+            break;
+
+        case "dresser":
+            ctx.fillStyle =
+                "#544437";
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 4,
+                TILE - 8,
+                TILE - 8
+            );
+
+            ctx.fillStyle =
+                "#2c251f";
+
+            ctx.fillRect(
+                sx + 7,
+                sy + 10,
+                TILE - 14,
+                2
+            );
+            break;
+
+        case "dumpster":
+            ctx.fillStyle =
+                "#314c3c";
+
+            ctx.fillRect(
+                sx + 2,
+                sy + 5,
+                TILE - 4,
+                TILE - 7
+            );
+
+            ctx.fillStyle =
+                "#1e3027";
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 3,
+                TILE - 8,
+                5
+            );
+            break;
+
+        case "crate":
+            ctx.fillStyle =
+                "#745539";
+
+            ctx.fillRect(
+                sx + 3,
+                sy + 3,
+                TILE - 6,
+                TILE - 6
+            );
+
+            ctx.strokeStyle =
+                "#3c2b1e";
+
+            ctx.strokeRect(
+                sx + 4,
+                sy + 4,
+                TILE - 8,
+                TILE - 8
+            );
+            break;
+
+        case "hydrant":
+            ctx.fillStyle =
+                "#a34b3a";
+
+            ctx.fillRect(
+                sx + 8,
+                sy + 7,
+                8,
+                13
+            );
+
+            ctx.fillRect(
+                sx + 5,
+                sy + 11,
+                14,
+                5
+            );
+            break;
+
+        case "trash":
+            ctx.fillStyle =
+                "#303234";
+
+            ctx.fillRect(
+                sx + 6,
+                sy + 5,
+                12,
+                15
+            );
+            break;
+
+        case "bench":
+            ctx.fillStyle =
+                "#72543b";
+
+            ctx.fillRect(
+                sx + 2,
+                sy + 8,
+                TILE - 4,
+                7
+            );
+
+            ctx.fillRect(
+                sx + 4,
+                sy + 15,
+                3,
+                5
+            );
+
+            ctx.fillRect(
+                sx + TILE - 7,
+                sy + 15,
+                3,
+                5
+            );
+            break;
+
+        case "tree":
+            drawTree(
+                sx,
+                sy
+            );
+            break;
+
+        case "car":
+            drawCar(
+                sx,
+                sy,
+                prop
+            );
+            break;
+
+        case "awning":
+            ctx.fillStyle =
+                "#8c5144";
+
+            ctx.fillRect(
+                sx + 2,
+                sy + 2,
+                TILE - 4,
+                6
+            );
+
+            ctx.fillStyle =
+                "#d0c3a1";
+
+            ctx.fillRect(
+                sx + 5,
+                sy + 2,
+                3,
+                6
+            );
+
+            ctx.fillRect(
+                sx + 13,
+                sy + 2,
+                3,
+                6
+            );
+            break;
+    }
+}
+
+function drawTree(sx, sy) {
+    ctx.fillStyle =
+        "#3c2e21";
+
+    ctx.fillRect(
+        sx + 10,
+        sy + 10,
+        5,
+        12
+    );
+
+    ctx.fillStyle =
+        "#213820";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        sx + 13,
+        sy + 10,
+        12,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle =
+        "#365635";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        sx + 9,
+        sy + 6,
+        8,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+}
+
+function drawCar(
+    sx,
+    sy,
+    prop
+) {
+    const palette = [
+        "#414b52",
+        "#683d38",
+        "#3d4542",
+        "#56564e",
+        "#334553"
+    ];
+
+    const color =
+        palette[
+            hash(
+                prop.x,
+                prop.y,
+                7000
+            ) %
+            palette.length
+        ];
+
+    ctx.fillStyle =
+        "rgba(0,0,0,.35)";
+
+    ctx.fillRect(
+        sx + 5,
+        sy + 5,
+        TILE - 4,
+        TILE - 2
+    );
+
+    ctx.fillStyle =
+        color;
+
+    ctx.fillRect(
+        sx + 3,
+        sy + 2,
+        TILE - 6,
+        TILE - 4
+    );
+
+    ctx.fillStyle =
+        "#1d272b";
+
+    ctx.fillRect(
+        sx + 7,
+        sy + 5,
+        TILE - 14,
+        6
+    );
+
+    ctx.fillRect(
+        sx + 7,
+        sy + 14,
+        TILE - 14,
+        5
+    );
+
+    ctx.fillStyle =
+        "#111";
+
+    ctx.fillRect(
+        sx + 1,
+        sy + 5,
+        4,
+        6
+    );
+
+    ctx.fillRect(
+        sx + TILE - 5,
+        sy + 5,
+        4,
+        6
+    );
+}
+
+/* ============================================================
+   PLAYER
+============================================================ */
+
+function drawPlayer() {
+    const x =
+        Math.floor(
+            screenWidth / 2
+        );
+
+    const y =
+        Math.floor(
+            screenHeight / 2
+        );
+
+    const bob =
+        player.moving
+            ? Math.round(
+                Math.sin(
+                    performance.now() *
+                    .018
+                ) * 1
+            )
+            : 0;
+
+    /*
+        Shadow.
+    */
+
+    ctx.fillStyle =
+        "rgba(0,0,0,.42)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x,
+        y + 10,
+        8,
+        4,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /*
+        Legs.
+    */
+
+    ctx.fillStyle =
+        "#292c30";
+
+    ctx.fillRect(
+        x - 6,
+        y + 2 + bob,
+        4,
+        10
+    );
+
+    ctx.fillRect(
+        x + 2,
+        y + 2 - bob,
+        4,
+        10
+    );
+
+    /*
+        Torso.
+    */
+
+    ctx.fillStyle =
+        "#48545a";
+
+    ctx.fillRect(
+        x - 7,
+        y - 9,
+        14,
+        13
+    );
+
+    /*
+        Arms.
+    */
+
+    ctx.fillStyle =
+        "#9b7155";
+
+    ctx.fillRect(
+        x - 10,
+        y - 7,
+        3,
+        10
+    );
+
+    ctx.fillRect(
+        x + 7,
+        y - 7,
+        3,
+        10
+    );
+
+    /*
+        Head.
+    */
+
+    ctx.fillStyle =
+        "#a77b5a";
+
+    ctx.fillRect(
+        x - 5,
+        y - 17,
+        10,
+        9
+    );
+
+    /*
+        Hair.
+    */
+
+    ctx.fillStyle =
+        "#201b18";
+
+    ctx.fillRect(
+        x - 5,
+        y - 19,
+        10,
+        4
+    );
+
+    /*
+        Facing indicator kept subtle.
+    */
+
+    ctx.fillStyle =
+        "#cbc8ad";
+
+    let fx = x;
+    let fy = y;
+
+    if (player.facing === "up")
+        fy -= 23;
+
+    if (player.facing === "down")
+        fy += 18;
+
+    if (player.facing === "left")
+        fx -= 14;
+
+    if (player.facing === "right")
+        fx += 14;
+
+    ctx.fillRect(
+        fx - 1,
+        fy - 1,
+        3,
+        3
+    );
+}
+
+/* ============================================================
    GAME LOOP
-========================================================= */
+============================================================ */
 
-let previousTime=
-performance.now();
+let previousTime =
+    performance.now();
 
-function gameLoop(time){
-
-    const dt=
+function gameLoop(time) {
+    const dt =
         Math.min(
             .05,
-
             (
-                time-
+                time -
                 previousTime
             ) /
             1000
         );
 
-    previousTime=time;
+    previousTime = time;
 
     updatePlayer(dt);
-
     updateCamera(dt);
-
     drawWorld();
 
     requestAnimationFrame(
@@ -4209,6 +4161,5 @@ requestAnimationFrame(
 );
 
 </script>
-
 </body>
 </html>
