@@ -492,25 +492,202 @@ function addDoor(chunk,building,x,y,side){
   );
 }
 
-function buildRoof(building){
-  building.roofTiles=building.parts.map((part,index)=>
-    building.type==="house"
-      ?{
-          x:part.x-.24,
-          y:part.y-.24,
-          w:part.w+.48,
-          h:part.h+.48,
-          z:building.wallHeight+.1,
-          pitched:true,
-          index
-        }
-      :{
-          ...part,
-          z:building.wallHeight+.12,
-          flat:true,
-          index
-        }
+function subtractRect(rect,blocker){
+  const ix1=Math.max(
+    rect.x,
+    blocker.x
   );
+
+  const iy1=Math.max(
+    rect.y,
+    blocker.y
+  );
+
+  const ix2=Math.min(
+    rect.x+rect.w,
+    blocker.x+blocker.w
+  );
+
+  const iy2=Math.min(
+    rect.y+rect.h,
+    blocker.y+blocker.h
+  );
+
+  if(ix1>=ix2||iy1>=iy2){
+    return[rect];
+  }
+
+  const pieces=[
+    rectangle(
+      rect.x,
+      rect.y,
+      rect.w,
+      iy1-rect.y
+    ),
+
+    rectangle(
+      rect.x,
+      iy2,
+      rect.w,
+      rect.y+rect.h-iy2
+    ),
+
+    rectangle(
+      rect.x,
+      iy1,
+      ix1-rect.x,
+      iy2-iy1
+    ),
+
+    rectangle(
+      ix2,
+      iy1,
+      rect.x+rect.w-ix2,
+      iy2-iy1
+    )
+  ];
+
+  return pieces.filter(
+    part=>part.w>.05&&part.h>.05
+  );
+}
+
+function buildRoof(building){
+  if(building.type==="house"){
+    /*
+      Houses used to create one complete pitched
+      roof for every overlapping building rectangle.
+
+      Instead, largest section is created first and
+      overlapping pieces are removed from extensions.
+    */
+
+    const ordered=building.parts
+      .map((part,index)=>({
+        part,
+        index,
+        area:part.w*part.h
+      }))
+      .sort((a,b)=>b.area-a.area);
+
+    const blockers=[];
+    const roofTiles=[];
+
+    for(let orderIndex=0;
+        orderIndex<ordered.length;
+        orderIndex++){
+
+      const entry=ordered[orderIndex];
+
+      let fragments=[
+        {...entry.part}
+      ];
+
+      for(const blocker of blockers){
+        fragments=
+          fragments.flatMap(
+            fragment=>
+              subtractRect(
+                fragment,
+                blocker
+              )
+          );
+      }
+
+      blockers.push(entry.part);
+
+      for(const fragment of fragments){
+        const primary=
+          orderIndex===0;
+
+        const overhang=
+          primary
+            ?.28
+            :.12;
+
+        roofTiles.push({
+          x:
+            fragment.x-
+            overhang,
+
+          y:
+            fragment.y-
+            overhang,
+
+          w:
+            fragment.w+
+            overhang*2,
+
+          h:
+            fragment.h+
+            overhang*2,
+
+          z:
+            building.wallHeight+
+            .1,
+
+          pitched:true,
+
+          riseScale:
+            primary
+              ?.20
+              :.16,
+
+          primary,
+
+          index:entry.index
+        });
+      }
+    }
+
+    building.roofTiles=roofTiles;
+    return;
+  }
+
+  /*
+    Apartments, deli and police station now get
+    ONE roof footprint instead of stacked rectangular
+    slabs and stacked parapets.
+  */
+
+  const cells=[
+    ...building.cells
+  ].map(
+    key=>
+      key
+        .split(",")
+        .map(Number)
+  );
+
+  const xs=cells.map(c=>c[0]);
+  const ys=cells.map(c=>c[1]);
+
+  const minX=Math.min(...xs);
+  const maxX=Math.max(...xs);
+  const minY=Math.min(...ys);
+  const maxY=Math.max(...ys);
+
+  building.roofTiles=[{
+    x:minX,
+    y:minY,
+
+    w:
+      maxX-minX+1,
+
+    h:
+      maxY-minY+1,
+
+    z:
+      building.wallHeight+
+      .12,
+
+    flatFootprint:true,
+
+    cells,
+    cellSet:building.cells,
+
+    index:0
+  }];
 }
 
 function addCompoundBuilding(chunk,parts,type,id,doorSide){
