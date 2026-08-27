@@ -6,22 +6,22 @@
 <title>Walker: New Dawn</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b0c;color:#eee;font-family:Arial,sans-serif;touch-action:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090c0d;color:#eee;font-family:Arial,sans-serif;touch-action:none}
 button,input{font:inherit}
 canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
-#hud{position:fixed;left:14px;top:12px;z-index:5;display:none;text-shadow:2px 2px #000;pointer-events:none}
-#hud b{font-size:17px;letter-spacing:1px}
-#area,#seedView{margin-top:4px;font-size:10px;color:#aaa99d}
+#hud{position:fixed;left:14px;top:12px;z-index:5;display:none;padding:10px 12px;border-left:3px solid #aaa66e;background:#0b0e0fbd;text-shadow:2px 2px #000;pointer-events:none;backdrop-filter:blur(4px)}
+#hud b{font-size:16px;letter-spacing:1.2px}
+#area,#seedView,#renderView{margin-top:4px;font-size:9px;color:#aaa99d}
 #staminaBox{width:150px;height:9px;margin-top:8px;border:2px solid #090a0b;background:#25282a}
 #stamina{height:100%;width:100%;background:#aaa66e}
-#menuBtn{display:none;position:fixed;right:14px;top:14px;z-index:8;padding:9px 12px;border:1px solid #55584f;background:#151918dd;color:#ddd9c7;font-size:10px;font-weight:900;letter-spacing:1.4px}
+#menuBtn{display:none;position:fixed;right:14px;top:14px;z-index:8;padding:10px 13px;border:1px solid #55584f;background:#111615e8;color:#ddd9c7;font-size:10px;font-weight:900;letter-spacing:1.4px}
 body.playing #hud,body.playing #menuBtn{display:block}
-#menu{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 35%,#303831 0,#0c0f10 48%,#050607 100%)}
+#menu{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 34%,#303832 0,#0b0f10 48%,#040506 100%)}
 #menu.hidden{display:none}
-.panel{width:min(470px,100%);padding:32px;border:1px solid #55584d;border-top:3px solid #aaa66e;background:#141819f5;box-shadow:0 25px 80px #000;color:#ecebdd}
+.panel{width:min(490px,100%);padding:34px;border:1px solid #55584d;border-top:3px solid #aaa66e;background:#141819f7;box-shadow:0 25px 90px #000;color:#ecebdd}
 .kicker{margin:0 0 8px;color:#aaa66e;font-size:10px;font-weight:900;letter-spacing:3px}
-.panel h1{margin:0;font-family:Impact,"Arial Narrow",sans-serif;font-size:clamp(44px,12vw,66px);font-weight:400;line-height:.88;text-transform:uppercase;text-shadow:4px 5px #080a0b}
-.sub{margin:16px 0 25px;color:#a9aaa2;font-size:12px;line-height:1.5}
+.panel h1{margin:0;font-family:Impact,"Arial Narrow",sans-serif;font-size:clamp(44px,12vw,68px);font-weight:400;line-height:.88;text-transform:uppercase;text-shadow:4px 5px #080a0b}
+.sub{margin:16px 0 25px;color:#a9aaa2;font-size:12px;line-height:1.55}
 .panel label{display:block;margin-bottom:7px;font-size:10px;font-weight:900;letter-spacing:1.5px}
 .seedRow{display:grid;grid-template-columns:1fr 48px;gap:8px}
 .seedRow input{min-width:0;padding:13px;border:1px solid #4d5049;outline:0;background:#080a0b;color:#f2efdf;font:16px "Courier New",monospace}
@@ -32,19 +32,13 @@ body.playing #hud,body.playing #menuBtn{display:block}
 .start{border:1px solid #cbc58b;background:#a9a36b;color:#101211}
 .continue{border:1px solid #50534d;background:transparent;color:#ddd}
 .types{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:22px}
-.types span{padding:8px 3px;border:1px solid #ffffff18;color:#999b93;font-size:8px;font-weight:900;text-align:center;text-transform:uppercase}
+.types span{padding:9px 3px;border:1px solid #ffffff18;color:#a2a49b;font-size:8px;font-weight:900;text-align:center;text-transform:uppercase}
 .note{margin:14px 0 0;color:#747870;font-size:9px;line-height:1.5;text-align:center}
 #joy{display:none;position:fixed;left:20px;bottom:22px;z-index:7;width:122px;height:122px;border:2px solid #ffffff2c;border-radius:50%;background:#ffffff0d}
 #stick{position:absolute;left:39px;top:39px;width:42px;height:42px;border-radius:50%;background:#ffffff40}
 #run{display:none;position:fixed;right:25px;bottom:34px;z-index:7;width:82px;height:82px;border:2px solid #ffffff2e;border-radius:50%;background:#ffffff12;color:#fff;font-size:11px;font-weight:900;align-items:center;justify-content:center;user-select:none}
-@media(pointer:coarse){
-body.playing #joy{display:block}
-body.playing #run{display:flex}
-}
-@media(max-width:520px){
-.panel{padding:27px 21px}
-.types{grid-template-columns:repeat(2,1fr)}
-}
+@media(pointer:coarse){body.playing #joy{display:block}body.playing #run{display:flex}}
+@media(max-width:520px){.panel{padding:27px 21px}.types{grid-template-columns:repeat(2,1fr)}#renderView{display:none}}
 </style>
 </head>
 <body>
@@ -55,97 +49,158 @@ body.playing #run{display:flex}
   <b>WALKER: NEW DAWN</b>
   <div id="area">NEW DAWN CITY</div>
   <div id="seedView">SEED • —</div>
+  <div id="renderView">2.5D CHUNK RENDERER</div>
   <div id="staminaBox"><div id="stamina"></div></div>
 </div>
 
 <button id="menuBtn" type="button">MENU</button>
-
 <div id="joy"><div id="stick"></div></div>
 <div id="run">SPRINT</div>
 
 <div id="menu" role="dialog" aria-modal="true">
   <main class="panel">
-    <p class="kicker">CITY SURVIVAL PROTOTYPE</p>
+    <p class="kicker">2.5D CITY SURVIVAL PROTOTYPE</p>
     <h1>Walker:<br>New Dawn</h1>
-    <p class="sub">Enter any seed to build a repeatable, human-scale city with connected streets and enterable interiors.</p>
+    <p class="sub">Every seed builds an original dimetric city with cutaway interiors, compound buildings, animated doors and roofs that fade as you approach.</p>
+
     <label for="seed">WORLD SEED</label>
+
     <div class="seedRow">
       <input id="seed" maxlength="40" autocomplete="off" spellcheck="false">
-      <button id="random" type="button">↻</button>
+      <button id="random" type="button" aria-label="Random seed">↻</button>
     </div>
+
     <div class="actions">
       <button class="start" id="start" type="button">GENERATE CITY</button>
       <button class="continue" id="continue" type="button" hidden>RETURN TO CITY</button>
     </div>
+
     <div class="types">
       <span>Houses</span>
       <span>Apartments</span>
       <span>Delis</span>
       <span>Police</span>
     </div>
-    <p class="note">One tile equals one meter. The same seed always rebuilds the same city.</p>
+
+    <p class="note">WASD / arrows or touch controls. Hold Shift or Sprint to run.</p>
   </main>
 </div>
 
 <script>
 "use strict";
 
-/* CANVAS AND WORLD SCALE */
+/* CANVAS AND CAMERA */
 
 const canvas=document.querySelector("#game");
 const ctx=canvas.getContext("2d");
 
 let SW=innerWidth;
 let SH=innerHeight;
+let DPR=1;
 
 function resize(){
   SW=innerWidth;
   SH=innerHeight;
+  DPR=Math.min(devicePixelRatio||1,2);
 
-  const d=Math.min(devicePixelRatio||1,2);
-
-  canvas.width=Math.floor(SW*d);
-  canvas.height=Math.floor(SH*d);
+  canvas.width=Math.floor(SW*DPR);
+  canvas.height=Math.floor(SH*DPR);
   canvas.style.width=SW+"px";
   canvas.style.height=SH+"px";
 
-  ctx.setTransform(d,0,0,d,0,0);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.imageSmoothingEnabled=false;
 }
 
 addEventListener("resize",resize);
 resize();
 
-const PX=22;
-const BLOCK=64;
+const TILE_W=44;
+const TILE_H=22;
+const Z_PX=27;
+
+const WORLD_CHUNK=64;
+const RENDER_CHUNK=16;
 const ROAD=8;
-const WALK=1.8*PX;
-const SPRINT=4*PX;
+
 const BUILD_MIN=10;
 const BUILD_MAX=62;
-const CHUNK_PX=BLOCK*PX;
 
-const COLORS={
-  road:"#1b1e20",
-  line:"#a79b54",
-  sidewalk:"#60615c",
-  lot:"#30332f",
-  grass:"#29402a",
-  parking:"#2b2d2e",
-  house:"#716858",
-  apartment:"#66635c",
-  deli:"#675f50",
-  police:"#60696c",
-  brick:"#4d4037",
-  concrete:"#494b49",
-  storeWall:"#57534b",
-  policeWall:"#3d4b52",
-  door:"#805a3d"
+const WALK_SPEED=2.05;
+const SPRINT_SPEED=4.25;
+
+const WALL_HEIGHT=2.65;
+
+const BUILDING_HEIGHT={
+  house:2.65,
+  apartment:5.35,
+  deli:3.05,
+  police:3.35
 };
 
-/* SEEDED RANDOMNESS */
+const SPAWN_X=9;
+const SPAWN_Y=11;
 
-let seedLabel="NEW-DAWN-1987";
+const camera={
+  x:SPAWN_X,
+  y:SPAWN_Y
+};
+
+function project(x,y,z=0){
+  const dx=x-camera.x;
+  const dy=y-camera.y;
+
+  return{
+    x:SW/2+(dx-dy)*TILE_W/2,
+    y:SH*.47+(dx+dy)*TILE_H/2-z*Z_PX
+  };
+}
+
+function quad(target,a,b,c,d,color,alpha=1){
+  target.save();
+  target.globalAlpha=alpha;
+  target.fillStyle=color;
+  target.beginPath();
+  target.moveTo(a.x,a.y);
+  target.lineTo(b.x,b.y);
+  target.lineTo(c.x,c.y);
+  target.lineTo(d.x,d.y);
+  target.closePath();
+  target.fill();
+  target.restore();
+}
+
+function diamond(target,point,w,h,color,stroke=null,alpha=1){
+  target.save();
+  target.globalAlpha=alpha;
+  target.fillStyle=color;
+  target.beginPath();
+  target.moveTo(point.x,point.y);
+  target.lineTo(point.x+w/2,point.y+h/2);
+  target.lineTo(point.x,point.y+h);
+  target.lineTo(point.x-w/2,point.y+h/2);
+  target.closePath();
+  target.fill();
+
+  if(stroke){
+    target.strokeStyle=stroke;
+    target.stroke();
+  }
+
+  target.restore();
+}
+
+const lerpPoint=(a,b,t)=>({
+  x:a.x+(b.x-a.x)*t,
+  y:a.y+(b.y-a.y)*t
+});
+
+const mod=(n,d)=>((n%d)+d)%d;
+const cellKey=(x,y)=>x+","+y;
+
+/* SEEDED RANDOM GENERATION */
+
+let seedLabel="NEW-DAWN-1993";
 let worldSeed=1;
 
 function seedNumber(text){
@@ -162,12 +217,11 @@ function seedNumber(text){
   return(h>>>0)||1;
 }
 
-function hash(x,y,salt=0){
-  let h=
-    worldSeed^
-    Math.imul(x,374761393)^
-    Math.imul(y,668265263)^
-    Math.imul(salt,1442695041);
+function hash(x,y,s=0){
+  let h=worldSeed
+    ^Math.imul(x,374761393)
+    ^Math.imul(y,668265263)
+    ^Math.imul(s,1442695041);
 
   h=Math.imul(h^(h>>>16),2246822507);
   h=Math.imul(h^(h>>>13),3266489909);
@@ -175,19 +229,10 @@ function hash(x,y,salt=0){
   return(h^(h>>>16))>>>0;
 }
 
-function rand(x,y,salt=0){
-  return hash(x,y,salt)/4294967296;
-}
+const rand=(x,y,s=0)=>hash(x,y,s)/4294967296;
+const mix=(a,b,t)=>a+(b-a)*t;
 
-function mod(number,divisor){
-  return((number%divisor)+divisor)%divisor;
-}
-
-function lerp(a,b,t){
-  return a+(b-a)*t;
-}
-
-function noise(x,y,salt){
+function noise(x,y,s){
   const x0=Math.floor(x);
   const y0=Math.floor(y);
   const tx=x-x0;
@@ -195,74 +240,81 @@ function noise(x,y,salt){
   const u=tx*tx*(3-2*tx);
   const v=ty*ty*(3-2*ty);
 
-  return lerp(
-    lerp(rand(x0,y0,salt),rand(x0+1,y0,salt),u),
-    lerp(rand(x0,y0+1,salt),rand(x0+1,y0+1,salt),u),
+  return mix(
+    mix(rand(x0,y0,s),rand(x0+1,y0,s),u),
+    mix(rand(x0,y0+1,s),rand(x0+1,y0+1,s),u),
     v
   );
 }
 
-function density(cx,cy){
-  return noise(cx/7,cy/7,20)*.72+
-         noise(cx/3,cy/3,21)*.28;
+function cityDensity(cx,cy){
+  return noise(cx/7,cy/7,11)*.7+
+         noise(cx/3,cy/3,12)*.3;
 }
 
-function isPolice(cx,cy){
-  const sectorX=Math.floor(cx/6);
-  const sectorY=Math.floor(cy/6);
+function policeBlockAt(cx,cy){
+  const sx=Math.floor(cx/6);
+  const sy=Math.floor(cy/6);
 
-  return(
-    cx===sectorX*6+hash(sectorX,sectorY,30)%6&&
-    cy===sectorY*6+hash(sectorX,sectorY,31)%6
-  );
+  return cx===sx*6+hash(sx,sy,20)%6 &&
+         cy===sy*6+hash(sx,sy,21)%6;
 }
 
-function isCommercial(cx,cy){
-  const vertical=
-    mod(cx+(hash(0,Math.floor(cy/10),40)%3),6)===0;
-
-  const horizontal=
-    mod(cy+(hash(Math.floor(cx/10),0,41)%3),7)===0;
-
-  return vertical||horizontal;
+function commercialAt(cx,cy){
+  return mod(cx+hash(0,Math.floor(cy/9),30)%3,6)===0||
+         mod(cy+hash(Math.floor(cx/9),0,31)%3,7)===0;
 }
 
-/* WORLD DATA */
+/* WORLD MODEL */
 
-const chunks=new Map();
-const key=(x,y)=>x+","+y;
+const worldChunks=new Map();
+const renderCache=new Map();
 
-function wall(chunk,x,y,type){
-  chunk.walls.set(key(x,y),type);
-  chunk.solid.add(key(x,y));
+let frameNumber=0;
+
+function rectangle(x,y,w,h){
+  return{x,y,w,h};
 }
 
-function clearWall(chunk,x,y){
-  chunk.walls.delete(key(x,y));
-  chunk.solid.delete(key(x,y));
+function cellsInRect(r){
+  const result=[];
+
+  for(let y=r.y;y<r.y+r.h;y++){
+    for(let x=r.x;x<r.x+r.w;x++){
+      result.push([x,y]);
+    }
+  }
+
+  return result;
 }
 
-function lineH(chunk,y,x1,x2,gap,type){
-  for(let x=x1;x<=x2;x++){
-    if(x!==gap)wall(chunk,x,y,type);
+function paintGround(chunk,r,type){
+  for(const[x,y]of cellsInRect(r)){
+    chunk.ground.set(cellKey(x,y),type);
   }
 }
 
-function lineV(chunk,x,y1,y2,gap,type){
-  for(let y=y1;y<=y2;y++){
-    if(y!==gap)wall(chunk,x,y,type);
-  }
+function addSolid(chunk,x,y){
+  chunk.solid.add(cellKey(x,y));
 }
 
-function addProp(chunk,kind,x,y,w=1,h=1,solid=false){
-  const prop={kind,x,y,w,h};
+function addProp(chunk,kind,x,y,w=1,h=1,solid=false,extra={}){
+  const prop={
+    kind,
+    x,
+    y,
+    w,
+    h,
+    anim:0,
+    ...extra
+  };
 
   chunk.props.push(prop);
 
   if(solid){
     for(let py=y;py<y+h;py++){
       for(let px=x;px<x+w;px++){
-        chunk.solid.add(key(px,py));
+        addSolid(chunk,px,py);
       }
     }
   }
@@ -270,600 +322,911 @@ function addProp(chunk,kind,x,y,w=1,h=1,solid=false){
   return prop;
 }
 
-function rect(x,y,w,h){
-  return{x,y,w,h};
+function floorFor(type){
+  if(type==="house")return"wood";
+  if(type==="apartment")return"carpet";
+  if(type==="deli")return"store";
+  return"police";
 }
 
-/* BUILDINGS */
+function wallFor(type){
+  if(type==="house")return"brick";
+  if(type==="apartment")return"plaster";
+  if(type==="deli")return"storeWall";
+  return"policeWall";
+}
 
-function addBuilding(chunk,r,type,id){
-  const wallType=
-    type==="house"?"brick":
-    type==="apartment"?"concrete":
-    type==="deli"?"storeWall":
-    "policeWall";
+function addWall(chunk,building,x,y,exterior=false,type=building.wallType){
+  if(!building.cells.has(cellKey(x,y)))return;
+
+  chunk.walls.set(cellKey(x,y),{
+    type,
+    height:building.wallHeight,
+    exterior,
+    bid:building.uid,
+    window:exterior&&hash(
+      chunk.cx*WORLD_CHUNK+x,
+      chunk.cy*WORLD_CHUNK+y,
+      91
+    )%3!==0
+  });
+
+  addSolid(chunk,x,y);
+}
+
+function removeWall(chunk,x,y){
+  chunk.walls.delete(cellKey(x,y));
+  chunk.solid.delete(cellKey(x,y));
+}
+
+function wallLineH(chunk,building,y,x1,x2,gap){
+  for(let x=x1;x<=x2;x++){
+    if(x!==gap)addWall(chunk,building,x,y,false);
+  }
+}
+
+function wallLineV(chunk,building,x,y1,y2,gap){
+  for(let y=y1;y<=y2;y++){
+    if(y!==gap)addWall(chunk,building,x,y,false);
+  }
+}
+
+function preferredDoor(building,side){
+  const direction=
+    side==="top"?[0,-1]:
+    side==="bottom"?[0,1]:
+    side==="left"?[-1,0]:
+    [1,0];
+
+  const cells=[...building.cells].map(k=>
+    k.split(",").map(Number)
+  );
+
+  const centerX=cells.reduce((n,c)=>n+c[0],0)/cells.length;
+  const centerY=cells.reduce((n,c)=>n+c[1],0)/cells.length;
+
+  const candidates=cells.filter(([x,y])=>
+    !building.cells.has(
+      cellKey(x+direction[0],y+direction[1])
+    )
+  );
+
+  candidates.sort((a,b)=>
+    side==="top"||side==="bottom"
+      ?Math.abs(a[0]-centerX)-Math.abs(b[0]-centerX)
+      :Math.abs(a[1]-centerY)-Math.abs(b[1]-centerY)
+  );
+
+  return candidates[0];
+}
+
+function addDoor(chunk,building,x,y,side){
+  removeWall(chunk,x,y);
+
+  building.doors.push({x,y,side});
+
+  addProp(chunk,"door",x,y,1,1,false,{
+    side,
+    bid:building.uid,
+    buildingType:building.type
+  });
+}
+
+function buildRoof(building){
+  building.roofTiles=building.parts.map((part,index)=>
+    building.type==="house"
+      ?{
+          x:part.x-.24,
+          y:part.y-.24,
+          w:part.w+.48,
+          h:part.h+.48,
+          z:building.wallHeight+.1,
+          pitched:true,
+          index
+        }
+      :{
+          ...part,
+          z:building.wallHeight+.12,
+          flat:true,
+          index
+        }
+  );
+}
+
+function addCompoundBuilding(chunk,parts,type,id,doorSide){
+  const cells=new Set();
+
+  for(const part of parts){
+    for(const[x,y]of cellsInRect(part)){
+      cells.add(cellKey(x,y));
+    }
+  }
 
   const building={
-    ...r,
-    type,
+    uid:chunk.cx+","+chunk.cy+":"+id,
     id,
-    floor:COLORS[type],
-    wallType,
-    doors:[]
+    type,
+    parts,
+    cells,
+    doors:[],
+    wallType:wallFor(type),
+    wallHeight:BUILDING_HEIGHT[type]||WALL_HEIGHT,
+    roofTiles:[],
+    roofAlpha:1
   };
 
   chunk.buildings.push(building);
 
-  for(let x=r.x;x<r.x+r.w;x++){
-    wall(chunk,x,r.y,wallType);
-    wall(chunk,x,r.y+r.h-1,wallType);
+  for(const k of cells){
+    const[x,y]=k.split(",").map(Number);
+
+    chunk.floors.set(k,floorFor(type));
+
+    const outside=[
+      [1,0],
+      [-1,0],
+      [0,1],
+      [0,-1]
+    ].some(([dx,dy])=>
+      !cells.has(cellKey(x+dx,y+dy))
+    );
+
+    if(outside)addWall(chunk,building,x,y,true);
   }
 
-  for(let y=r.y;y<r.y+r.h;y++){
-    wall(chunk,r.x,y,wallType);
-    wall(chunk,r.x+r.w-1,y,wallType);
+  const door=preferredDoor(building,doorSide);
+
+  if(door){
+    addDoor(
+      chunk,
+      building,
+      door[0],
+      door[1],
+      doorSide
+    );
   }
 
-  const centerX=r.x+r.w/2;
-  const centerY=r.y+r.h/2;
-
-  const distances={
-    top:centerY-BUILD_MIN,
-    left:centerX-BUILD_MIN,
-    right:BUILD_MAX-centerX,
-    bottom:BUILD_MAX-centerY
-  };
-
-  const side=Object.keys(distances)
-    .sort((a,b)=>distances[a]-distances[b])[0];
-
-  let doorX;
-  let doorY;
-
-  if(side==="top"||side==="bottom"){
-    doorX=r.x+Math.floor(r.w/2);
-    doorY=side==="top"?r.y:r.y+r.h-1;
-  }else{
-    doorX=side==="left"?r.x:r.x+r.w-1;
-    doorY=r.y+Math.floor(r.h/2);
-  }
-
-  clearWall(chunk,doorX,doorY);
-
-  building.doors.push({
-    x:doorX,
-    y:doorY,
-    side
-  });
-
-  if(type==="house")homeInterior(chunk,r,wallType);
-  if(type==="apartment")apartmentInterior(chunk,r,wallType);
-  if(type==="deli")deliInterior(chunk,r,wallType);
-  if(type==="police")policeInterior(chunk,r,wallType);
+  buildRoof(building);
 
   return building;
 }
 
-/* INTERIORS */
+function setFloor(chunk,r,type){
+  for(const[x,y]of cellsInRect(r)){
+    if(chunk.floors.has(cellKey(x,y))){
+      chunk.floors.set(cellKey(x,y),type);
+    }
+  }
+}
 
-function homeInterior(chunk,r,wallType){
-  const middleX=r.x+Math.floor(r.w*.55);
-  const middleY=r.y+Math.floor(r.h*.52);
+/* BUILDING GENERATORS */
 
-  if(r.w>=10){
-    lineV(
+function furnishHouse(chunk,b,anchorX,anchorY){
+  wallLineV(
+    chunk,b,
+    anchorX+6,
+    anchorY+1,
+    anchorY+11,
+    anchorY+6
+  );
+
+  wallLineH(
+    chunk,b,
+    anchorY+7,
+    anchorX+1,
+    anchorX+10,
+    anchorX+4
+  );
+
+  addProp(chunk,"bed",anchorX+2,anchorY+2,2,3,true,{bid:b.uid});
+  addProp(chunk,"dresser",anchorX+4,anchorY+2,1,2,true,{bid:b.uid});
+  addProp(chunk,"sofa",anchorX+2,anchorY+9,3,1,true,{bid:b.uid});
+  addProp(chunk,"rug",anchorX+2,anchorY+7,4,3,false,{bid:b.uid});
+  addProp(chunk,"kitchen",anchorX+8,anchorY+2,2,4,true,{bid:b.uid});
+  addProp(chunk,"table",anchorX+8,anchorY+8,2,2,true,{bid:b.uid});
+  addProp(chunk,"stairs",anchorX+7,anchorY+12,2,3,true,{bid:b.uid});
+}
+
+function makeHouse(chunk,lot,doorSide,salt){
+  const variant=hash(chunk.cx,chunk.cy,salt)%3;
+
+  let parts;
+  let anchorX;
+  let anchorY;
+
+  if(variant===0){
+    anchorX=lot.x+4;
+    anchorY=lot.y+4;
+
+    parts=[
+      rectangle(anchorX,anchorY,13,15),
+      rectangle(anchorX+10,anchorY+8,6,7)
+    ];
+  }else if(variant===1){
+    anchorX=lot.x+7;
+    anchorY=lot.y+4;
+
+    parts=[
+      rectangle(anchorX,anchorY,13,15),
+      rectangle(anchorX-3,anchorY+8,6,7)
+    ];
+  }else{
+    anchorX=lot.x+5;
+    anchorY=lot.y+6;
+
+    parts=[
+      rectangle(anchorX,anchorY,16,12),
+      rectangle(anchorX+5,anchorY-3,7,6)
+    ];
+  }
+
+  const building=addCompoundBuilding(
+    chunk,
+    parts,
+    "house",
+    salt,
+    doorSide
+  );
+
+  furnishHouse(chunk,building,anchorX,anchorY);
+
+  const door=building.doors[0];
+
+  if(door){
+    const ox=
+      door.side==="left"?-2:
+      door.side==="right"?1:
+      -1;
+
+    const oy=
+      door.side==="top"?-2:
+      door.side==="bottom"?1:
+      -1;
+
+    addProp(
       chunk,
-      middleX,
-      r.y+1,
-      r.y+r.h-2,
-      middleY-1,
-      wallType
+      "porch",
+      door.x+ox,
+      door.y+oy,
+      door.side==="left"||door.side==="right"?2:3,
+      door.side==="top"||door.side==="bottom"?2:3,
+      false,
+      {bid:building.uid}
     );
   }
 
-  lineH(
-    chunk,
-    middleY,
-    r.x+1,
-    Math.max(r.x+1,middleX-1),
-    r.x+2,
-    wallType
-  );
-
-  addProp(chunk,"bed",r.x+r.w-3,r.y+2,1,2,true);
-  addProp(chunk,"dresser",r.x+r.w-3,r.y+5,1,1,true);
-  addProp(chunk,"sofa",r.x+2,r.y+r.h-3,2,1,true);
-  addProp(chunk,"rug",r.x+2,r.y+r.h-6,3,2,false);
-  addProp(chunk,"table",r.x+2,r.y+2,2,1,true);
-  addProp(chunk,"kitchen",r.x+2,middleY+1,2,1,true);
+  return building;
 }
 
-function apartmentInterior(chunk,r,wallType){
-  if(r.w<12){
-    homeInterior(chunk,r,wallType);
-    return;
-  }
+function generateResidential(chunk){
+  paintGround(
+    chunk,
+    rectangle(BUILD_MIN,BUILD_MIN,52,52),
+    "grass"
+  );
 
-  if(r.w>=30){
-    const hallLeft=r.x+Math.floor(r.w/2)-2;
-    const hallRight=hallLeft+4;
-    const unitHeight=Math.floor((r.h-2)/3);
-    const doorRows=[];
+  const size=26;
+  let id=1;
 
-    for(let row=0;row<3;row++){
-      doorRows.push(r.y+3+row*unitHeight);
-    }
-
-    for(let y=r.y+1;y<r.y+r.h-1;y++){
-      if(!doorRows.includes(y)){
-        wall(chunk,hallLeft,y,wallType);
-        wall(chunk,hallRight,y,wallType);
-      }
-    }
-
-    for(let row=1;row<3;row++){
-      const split=r.y+1+row*unitHeight;
-
-      lineH(
-        chunk,
-        split,
-        r.x+1,
-        hallLeft-1,
-        r.x+3,
-        wallType
+  for(let gx=0;gx<2;gx++){
+    for(let gy=0;gy<2;gy++){
+      const lot=rectangle(
+        BUILD_MIN+gx*size,
+        BUILD_MIN+gy*size,
+        size,
+        size
       );
 
-      lineH(
-        chunk,
-        split,
-        hallRight+1,
-        r.x+r.w-2,
-        r.x+r.w-4,
-        wallType
-      );
-    }
+      const side=gy===0?"top":"bottom";
 
-    for(let row=0;row<3;row++){
-      const unitY=r.y+2+row*unitHeight;
+      makeHouse(chunk,lot,side,100+id++);
 
-      addProp(chunk,"bed",r.x+2,unitY,1,2,true);
-      addProp(chunk,"sofa",r.x+6,unitY+2,2,1,true);
-      addProp(chunk,"bed",r.x+r.w-3,unitY,1,2,true);
-      addProp(chunk,"sofa",r.x+r.w-8,unitY+2,2,1,true);
-    }
-
-    addProp(chunk,"mail",hallLeft+2,r.y+2,1,2,false);
-    addProp(chunk,"rug",hallLeft+1,r.y+6,3,4,false);
-
-    return;
-  }
-
-  const middleX=r.x+Math.floor(r.w/2);
-  const middleY=r.y+Math.floor(r.h/2);
-
-  lineV(
-    chunk,
-    middleX-1,
-    r.y+1,
-    r.y+r.h-2,
-    r.y+Math.floor(r.h*.3),
-    wallType
-  );
-
-  lineV(
-    chunk,
-    middleX+1,
-    r.y+1,
-    r.y+r.h-2,
-    r.y+Math.floor(r.h*.7),
-    wallType
-  );
-
-  lineH(
-    chunk,
-    middleY,
-    r.x+1,
-    middleX-2,
-    r.x+2,
-    wallType
-  );
-
-  lineH(
-    chunk,
-    middleY,
-    middleX+2,
-    r.x+r.w-2,
-    r.x+r.w-3,
-    wallType
-  );
-
-  const beds=[
-    [r.x+2,r.y+2],
-    [r.x+r.w-3,r.y+2],
-    [r.x+2,r.y+r.h-4],
-    [r.x+r.w-3,r.y+r.h-4]
-  ];
-
-  for(const [x,y] of beds){
-    addProp(chunk,"bed",x,y,1,2,true);
-  }
-
-  addProp(chunk,"mail",middleX,r.y+2,1,1,false);
-  addProp(chunk,"rug",middleX-1,r.y+5,3,4,false);
-}
-
-function deliInterior(chunk,r,wallType){
-  const backRoomY=
-    r.y+Math.max(6,Math.floor(r.h*.3));
-
-  lineH(
-    chunk,
-    backRoomY,
-    r.x+1,
-    r.x+r.w-2,
-    r.x+r.w-4,
-    wallType
-  );
-
-  for(let y=backRoomY+3;y<r.y+r.h-3;y+=4){
-    for(let x=r.x+3;x<r.x+r.w-3;x+=4){
-      addProp(chunk,"shelf",x,y,1,3,true);
-    }
-  }
-
-  addProp(chunk,"counter",r.x+2,r.y+r.h-3,4,1,true);
-  addProp(chunk,"cooler",r.x+r.w-3,r.y+r.h-5,1,3,true);
-  addProp(chunk,"freezer",r.x+2,r.y+2,3,2,true);
-  addProp(chunk,"mat",r.x+Math.floor(r.w/2)-1,r.y+r.h-4,3,2,false);
-}
-
-function policeInterior(chunk,r,wallType){
-  const splitY=r.y+9;
-  const splitX=r.x+Math.floor(r.w*.58);
-
-  lineH(
-    chunk,
-    splitY,
-    r.x+1,
-    r.x+r.w-2,
-    splitX,
-    wallType
-  );
-
-  lineV(
-    chunk,
-    splitX,
-    splitY+1,
-    r.y+r.h-2,
-    splitY+3,
-    wallType
-  );
-
-  const cellY=splitY+9;
-
-  lineH(
-    chunk,
-    cellY,
-    splitX+1,
-    r.x+r.w-2,
-    splitX+2,
-    wallType
-  );
-
-  addProp(chunk,"desk",r.x+3,r.y+3,3,1,true);
-  addProp(chunk,"desk",r.x+9,r.y+3,3,1,true);
-  addProp(chunk,"bench",r.x+r.w-8,r.y+4,4,1,true);
-  addProp(chunk,"desk",r.x+3,splitY+4,3,1,true);
-  addProp(chunk,"desk",r.x+9,splitY+4,3,1,true);
-  addProp(chunk,"evidence",r.x+3,r.y+r.h-4,4,1,true);
-  addProp(chunk,"locker",splitX-3,r.y+r.h-4,2,1,true);
-  addProp(chunk,"bars",r.x+r.w-3,splitY+3,1,5,true);
-  addProp(chunk,"bars",r.x+r.w-3,cellY+2,1,5,true);
-  addProp(chunk,"rug",r.x+16,r.y+3,5,3,false);
-}
-
-/* BUILDING BLOCK LAYOUTS */
-
-function houseBlock(chunk){
-  const columns=3;
-  const rows=2;
-  const width=BUILD_MAX-BUILD_MIN;
-  const lotWidth=Math.floor(width/columns);
-  const lotHeight=Math.floor(width/rows);
-
-  let id=0;
-
-  for(let gx=0;gx<columns;gx++){
-    for(let gy=0;gy<rows;gy++){
-      const lot=rect(
-        BUILD_MIN+gx*lotWidth,
-        BUILD_MIN+gy*lotHeight,
-        gx===columns-1?width-lotWidth*gx:lotWidth,
-        gy===rows-1?width-lotHeight*gy:lotHeight
-      );
-
-      chunk.lots.push({
-        ...lot,
-        ground:"grass"
-      });
-
-      const buildingWidth=lot.w-4;
-      const buildingHeight=18;
-      const buildingX=lot.x+2;
-
-      const buildingY=
-        gy===0
-          ?lot.y+2
-          :lot.y+lot.h-buildingHeight-2;
-
-      addBuilding(
-        chunk,
-        rect(
-          buildingX,
-          buildingY,
-          buildingWidth,
-          buildingHeight
-        ),
-        "house",
-        ++id
-      );
-
-      if(rand(chunk.cx,chunk.cy,100+id)>.52){
+      if(rand(chunk.cx,chunk.cy,300+id)>.42){
         addProp(
           chunk,
           "tree",
-          lot.x+lot.w-3,
-          gy===0?lot.y+lot.h-3:lot.y+2,
-          1,
-          1,
-          true
+          lot.x+(gx?20:4),
+          lot.y+(gy?5:20),
+          1,1,true
         );
       }
     }
   }
 }
 
-function apartmentBlock(chunk){
-  const width=BUILD_MAX-BUILD_MIN;
-
-  chunk.lots.push({
-    x:BUILD_MIN,
-    y:BUILD_MIN,
-    w:width,
-    h:width,
-    ground:"lot"
-  });
-
-  addBuilding(
+function generateApartments(chunk){
+  paintGround(
     chunk,
-    rect(
-      BUILD_MIN+4,
-      BUILD_MIN+3,
-      44,
-      38
-    ),
+    rectangle(BUILD_MIN,BUILD_MIN,52,52),
+    "pavement"
+  );
+
+  paintGround(
+    chunk,
+    rectangle(24,23,16,27),
+    "courtyard"
+  );
+
+  const parts=[
+    rectangle(14,13,10,37),
+    rectangle(14,13,36,10),
+    rectangle(40,13,10,37)
+  ];
+
+  const building=addCompoundBuilding(
+    chunk,
+    parts,
     "apartment",
-    1
+    1,
+    "top"
+  );
+
+  for(const x of[19,45]){
+    wallLineV(chunk,building,x,14,48,22);
+
+    wallLineH(
+      chunk,
+      building,
+      30,
+      x===19?15:41,
+      x===19?23:49,
+      x===19?18:46
+    );
+
+    addProp(
+      chunk,
+      "stairs",
+      x===19?16:43,
+      17,
+      2,4,true,
+      {bid:building.uid}
+    );
+
+    addProp(
+      chunk,
+      "bed",
+      x===19?16:43,
+      25,
+      2,3,true,
+      {bid:building.uid}
+    );
+
+    addProp(
+      chunk,
+      "sofa",
+      x===19?20:46,
+      35,
+      2,1,true,
+      {bid:building.uid}
+    );
+  }
+
+  wallLineH(chunk,building,18,24,39,31);
+  wallLineV(chunk,building,31,14,22,17);
+
+  addProp(chunk,"mail",28,16,3,1,true,{bid:building.uid});
+  addProp(chunk,"rug",27,18,8,3,false,{bid:building.uid});
+
+  addProp(
+    chunk,
+    "balcony",
+    26,11.8,4,1.2,false,
+    {bid:building.uid,baseZ:2.58}
   );
 
   addProp(
     chunk,
-    "dumpster",
-    BUILD_MAX-4,
-    BUILD_MAX-4,
-    2,
-    2,
-    true
+    "balcony",
+    34,11.8,4,1.2,false,
+    {bid:building.uid,baseZ:2.58}
   );
 
-  for(let x=BUILD_MIN+7;x<BUILD_MAX-5;x+=7){
-    if(rand(chunk.cx,chunk.cy,180+x)>.48){
-      addProp(
-        chunk,
-        "car",
-        x,
-        BUILD_MAX-7,
-        2,
-        4,
-        true
-      );
+  addProp(chunk,"bench",27,31,3,1,true);
+  addProp(chunk,"bench",35,39,3,1,true);
+  addProp(chunk,"tree",32,36,1,1,true);
+
+  for(let x=16;x<49;x+=8){
+    if(rand(chunk.cx,chunk.cy,400+x)>.45){
+      addProp(chunk,"car",x,54,2,4,true);
     }
   }
 }
 
-function mixedBlock(chunk){
-  const columns=2;
-  const rows=2;
-  const width=BUILD_MAX-BUILD_MIN;
-  const lotWidth=Math.floor(width/columns);
-  const lotHeight=Math.floor(width/rows);
-
-  const deliIndex=hash(chunk.cx,chunk.cy,200)%4;
-
-  const secondDeli=
-    rand(chunk.cx,chunk.cy,201)>.72
-      ?(deliIndex+2)%4
-      :-1;
-
-  let id=0;
-
-  for(let gx=0;gx<columns;gx++){
-    for(let gy=0;gy<rows;gy++){
-      const index=id++;
-
-      const lot=rect(
-        BUILD_MIN+gx*lotWidth,
-        BUILD_MIN+gy*lotHeight,
-        gx===1?width-lotWidth:lotWidth,
-        gy===1?width-lotHeight:lotHeight
-      );
-
-      const type=
-        index===deliIndex||index===secondDeli
-          ?"deli"
-          :rand(chunk.cx,chunk.cy,220+index)>.28
-            ?"apartment"
-            :"house";
-
-      chunk.lots.push({
-        ...lot,
-        ground:type==="house"?"grass":"lot"
-      });
-
-      let building;
-
-      if(type==="deli"){
-        building=rect(
-          lot.x+4,
-          lot.y+3,
-          lot.w-8,
-          lot.h-6
-        );
-      }else if(type==="house"){
-        const buildingHeight=18;
-
-        building=rect(
-          lot.x+3,
-          gy===0
-            ?lot.y+2
-            :lot.y+lot.h-buildingHeight-2,
-          lot.w-6,
-          buildingHeight
-        );
-      }else{
-        building=rect(
-          lot.x+2,
-          lot.y+2,
-          lot.w-4,
-          lot.h-4
-        );
-      }
-
-      addBuilding(chunk,building,type,id);
-    }
-  }
-}
-
-function policeBlock(chunk){
-  const width=BUILD_MAX-BUILD_MIN;
-
-  chunk.lots.push({
-    x:BUILD_MIN,
-    y:BUILD_MIN,
-    w:width,
-    h:width,
-    ground:"parking"
-  });
-
-  addBuilding(
+function furnishDeli(chunk,building,x,y){
+  wallLineH(
     chunk,
-    rect(
-      BUILD_MIN+4,
-      BUILD_MIN+3,
-      44,
-      30
-    ),
-    "police",
-    1
+    building,
+    y+7,
+    x+1,
+    x+15,
+    x+12
   );
 
-  const parkingY=BUILD_MIN+38;
+  setFloor(
+    chunk,
+    rectangle(x+1,y+1,15,6),
+    "backroom"
+  );
 
-  for(let x=BUILD_MIN+6;x<BUILD_MAX-4;x+=6){
-    if(rand(chunk.cx,chunk.cy,300+x)>.22){
+  for(let sx=x+3;sx<x+14;sx+=4){
+    addProp(
+      chunk,
+      "shelf",
+      sx,
+      y+10,
+      1,5,true,
+      {bid:building.uid}
+    );
+  }
+
+  addProp(chunk,"counter",x+2,y+16,5,1,true,{bid:building.uid});
+  addProp(chunk,"cooler",x+14,y+10,1,6,true,{bid:building.uid});
+  addProp(chunk,"freezer",x+2,y+2,4,3,true,{bid:building.uid});
+}
+
+function makeDeli(chunk,lot,doorSide,id){
+  const x=lot.x+4;
+  const y=lot.y+3;
+
+  const parts=[
+    rectangle(x,y,17,16),
+    rectangle(x+9,y+13,10,8)
+  ];
+
+  const building=addCompoundBuilding(
+    chunk,
+    parts,
+    "deli",
+    id,
+    doorSide
+  );
+
+  furnishDeli(chunk,building,x,y);
+
+  const door=building.doors[0];
+
+  if(door){
+    addProp(
+      chunk,
+      "awning",
+      door.x,
+      door.y,
+      1,1,false,
+      {
+        side:door.side,
+        bid:building.uid
+      }
+    );
+  }
+
+  addProp(chunk,"crate",x+12,y+18,2,2,true);
+
+  return building;
+}
+
+function makeSmallApartment(chunk,lot,doorSide,id){
+  const x=lot.x+5;
+  const y=lot.y+3;
+
+  const parts=[
+    rectangle(x,y,16,19),
+    rectangle(x-3,y+7,6,10)
+  ];
+
+  const building=addCompoundBuilding(
+    chunk,
+    parts,
+    "apartment",
+    id,
+    doorSide
+  );
+
+  wallLineH(chunk,building,y+8,x+1,x+14,x+7);
+  wallLineV(chunk,building,x+8,y+1,y+17,y+12);
+
+  addProp(chunk,"bed",x+2,y+2,2,3,true,{bid:building.uid});
+  addProp(chunk,"bed",x+11,y+10,2,3,true,{bid:building.uid});
+  addProp(chunk,"sofa",x+2,y+12,3,1,true,{bid:building.uid});
+  addProp(chunk,"kitchen",x+11,y+2,2,4,true,{bid:building.uid});
+  addProp(chunk,"stairs",x+6,y+14,2,3,true,{bid:building.uid});
+
+  addProp(
+    chunk,
+    "balcony",
+    x+6,
+    doorSide==="top"?y-1:y+18.8,
+    4,1.2,false,
+    {
+      bid:building.uid,
+      baseZ:2.58
+    }
+  );
+
+  return building;
+}
+
+function generateMixed(chunk){
+  paintGround(
+    chunk,
+    rectangle(BUILD_MIN,BUILD_MIN,52,52),
+    "pavement"
+  );
+
+  const deli=hash(chunk.cx,chunk.cy,500)%4;
+  let id=1;
+
+  for(let gx=0;gx<2;gx++){
+    for(let gy=0;gy<2;gy++){
+      const index=gy+gx*2;
+
+      const lot=rectangle(
+        BUILD_MIN+gx*26,
+        BUILD_MIN+gy*26,
+        26,26
+      );
+
+      const side=gy===0?"top":"bottom";
+
+      if(index===deli){
+        makeDeli(chunk,lot,side,id++);
+      }else if(rand(chunk.cx,chunk.cy,520+index)>.32){
+        makeSmallApartment(chunk,lot,side,id++);
+      }else{
+        makeHouse(chunk,lot,side,600+id++);
+      }
+    }
+  }
+}
+
+function generatePolice(chunk){
+  paintGround(
+    chunk,
+    rectangle(BUILD_MIN,BUILD_MIN,52,52),
+    "parking"
+  );
+
+  const parts=[
+    rectangle(14,13,34,18),
+    rectangle(14,29,18,16),
+    rectangle(36,29,12,16)
+  ];
+
+  const building=addCompoundBuilding(
+    chunk,
+    parts,
+    "police",
+    1,
+    "top"
+  );
+
+  wallLineH(chunk,building,21,15,47,31);
+  wallLineV(chunk,building,25,14,44,20);
+  wallLineV(chunk,building,39,14,44,34);
+  wallLineH(chunk,building,36,15,31,20);
+  wallLineH(chunk,building,36,37,47,43);
+
+  addProp(chunk,"desk",17,16,4,2,true,{bid:building.uid});
+  addProp(chunk,"desk",27,16,4,2,true,{bid:building.uid});
+  addProp(chunk,"bench",38,17,6,1,true,{bid:building.uid});
+  addProp(chunk,"locker",16,39,7,1,true,{bid:building.uid});
+  addProp(chunk,"evidence",27,39,3,2,true,{bid:building.uid});
+  addProp(chunk,"bars",42,32,1,10,true,{bid:building.uid});
+
+  addProp(
+    chunk,
+    "policeSign",
+    27,13,8,1,false,
+    {bid:building.uid}
+  );
+
+  addProp(
+    chunk,
+    "garageDoor",
+    39,44,7,1,false,
+    {bid:building.uid}
+  );
+
+  for(let x=16;x<58;x+=7){
+    if(rand(chunk.cx,chunk.cy,700+x)>.28){
       addProp(
         chunk,
         "policeCar",
-        x,
-        parkingY,
-        2,
-        4,
-        true
+        x,50,2,4,true
       );
     }
   }
+
+  for(let x=13;x<51;x++){
+    if(x<31||x>33){
+      addProp(chunk,"fence",x,47,1,1,true);
+    }
+  }
+
+  addProp(chunk,"gate",31,47,3,1,false);
 }
 
-function generateChunk(cx,cy){
+function generateWorldChunk(cx,cy){
   const chunk={
     cx,
     cy,
+    district:"residential",
+    ground:new Map(),
+    floors:new Map(),
     walls:new Map(),
     solid:new Set(),
-    buildings:[],
-    lots:[],
     props:[],
-    district:"residential"
+    buildings:[]
   };
 
-  if(isPolice(cx,cy)){
+  if(policeBlockAt(cx,cy)){
     chunk.district="police precinct";
-    policeBlock(chunk);
-  }else if(isCommercial(cx,cy)){
+    generatePolice(chunk);
+  }else if(commercialAt(cx,cy)){
     chunk.district="mixed use";
-    mixedBlock(chunk);
-  }else if(density(cx,cy)>.56){
-    chunk.district="apartment district";
-    apartmentBlock(chunk);
+    generateMixed(chunk);
+  }else if(cityDensity(cx,cy)>.57){
+    chunk.district="apartment complex";
+    generateApartments(chunk);
   }else{
-    houseBlock(chunk);
+    generateResidential(chunk);
   }
 
   return chunk;
 }
 
-function getChunk(cx,cy){
-  const chunkKey=key(cx,cy);
+function getWorldChunk(cx,cy){
+  const key=cellKey(cx,cy);
 
-  if(!chunks.has(chunkKey)){
-    chunks.set(chunkKey,generateChunk(cx,cy));
+  if(!worldChunks.has(key)){
+    worldChunks.set(
+      key,
+      generateWorldChunk(cx,cy)
+    );
   }
 
-  return chunks.get(chunkKey);
+  return worldChunks.get(key);
 }
 
-/* PLAYER AND COLLISION */
+function worldCell(gx,gy){
+  const cx=Math.floor(gx/WORLD_CHUNK);
+  const cy=Math.floor(gy/WORLD_CHUNK);
+  const lx=mod(gx,WORLD_CHUNK);
+  const ly=mod(gy,WORLD_CHUNK);
 
-const player={
-  x:ROAD*.5*PX,
-  y:ROAD*.5*PX,
-  w:.65*PX,
-  h:.85*PX,
-  stamina:100,
-  facing:"down",
-  moving:false
-};
+  const chunk=getWorldChunk(cx,cy);
+  const key=cellKey(lx,ly);
 
-const camera={
-  x:player.x,
-  y:player.y
-};
+  let ground;
 
-function solidTile(tileX,tileY){
-  const chunkX=Math.floor(tileX/BLOCK);
-  const chunkY=Math.floor(tileY/BLOCK);
-  const localX=mod(tileX,BLOCK);
-  const localY=mod(tileY,BLOCK);
+  if(lx<ROAD||ly<ROAD){
+    ground="road";
+  }else if(
+    lx<BUILD_MIN||
+    ly<BUILD_MIN||
+    lx>=BUILD_MAX||
+    ly>=BUILD_MAX
+  ){
+    ground="sidewalk";
+  }else{
+    ground=chunk.ground.get(key)||"pavement";
+  }
 
-  return getChunk(chunkX,chunkY)
-    .solid
-    .has(key(localX,localY));
+  return{
+    ground,
+    floor:chunk.floors.get(key)||null,
+    cx,
+    cy,
+    lx,
+    ly
+  };
 }
 
-function collides(x,y){
-  const left=Math.floor((x-player.w/2)/PX);
-  const right=Math.floor((x+player.w/2-.01)/PX);
-  const top=Math.floor((y-player.h/2)/PX);
-  const bottom=Math.floor((y+player.h/2-.01)/PX);
+/* STATIC RENDER CHUNKS */
 
-  for(let tileY=top;tileY<=bottom;tileY++){
-    for(let tileX=left;tileX<=right;tileX++){
-      if(solidTile(tileX,tileY))return true;
+const GROUND={
+  road:["#202427","#1d2123"],
+  sidewalk:["#686a65","#60625e"],
+  grass:["#324c31","#2c452c"],
+  pavement:["#3c403d","#383b39"],
+  courtyard:["#3c5138","#354a34"],
+  parking:["#303436","#2c3032"]
+};
+
+const FLOORS={
+  wood:["#8a745b","#806b54"],
+  carpet:["#66645d","#5f5d57"],
+  store:["#797365","#716b5e"],
+  police:["#687477","#616c6f"],
+  backroom:["#5d5b55","#56544f"]
+};
+
+function makeLayerCanvas(width,height){
+  if(typeof OffscreenCanvas!=="undefined"){
+    return new OffscreenCanvas(width,height);
+  }
+
+  const layer=document.createElement("canvas");
+  layer.width=width;
+  layer.height=height;
+
+  return layer;
+}
+
+function cachePoint(x,y){
+  return{
+    x:(x-y)*TILE_W/2+
+      RENDER_CHUNK*TILE_W/2+8,
+    y:(x+y)*TILE_H/2+8
+  };
+}
+
+function cachedDiamond(layer,x,y,color,stroke=null){
+  diamond(
+    layer,
+    cachePoint(x,y),
+    TILE_W,
+    TILE_H,
+    color,
+    stroke
+  );
+}
+
+function buildRenderChunk(rx,ry){
+  const width=RENDER_CHUNK*TILE_W+16;
+  const height=RENDER_CHUNK*TILE_H+18;
+
+  const layer=makeLayerCanvas(width,height);
+  const graphics=layer.getContext("2d");
+
+  graphics.imageSmoothingEnabled=false;
+
+  const startX=rx*RENDER_CHUNK;
+  const startY=ry*RENDER_CHUNK;
+
+  for(let sum=0;sum<=2*(RENDER_CHUNK-1);sum++){
+    for(let ly=0;ly<RENDER_CHUNK;ly++){
+      const lx=sum-ly;
+
+      if(lx<0||lx>=RENDER_CHUNK)continue;
+
+      const gx=startX+lx;
+      const gy=startY+ly;
+      const cell=worldCell(gx,gy);
+      const variation=hash(gx,gy,800)%2;
+
+      cachedDiamond(
+        graphics,
+        lx,
+        ly,
+        GROUND[cell.ground][variation],
+        "rgba(8,10,9,.15)"
+      );
+
+      if(cell.floor){
+        cachedDiamond(
+          graphics,
+          lx,
+          ly-.02,
+          FLOORS[cell.floor][variation],
+          "rgba(20,20,18,.22)"
+        );
+
+        const point=cachePoint(lx+.5,ly+.5);
+
+        graphics.fillStyle="rgba(255,255,255,.07)";
+        graphics.fillRect(
+          point.x-1,
+          point.y-1,
+          2,2
+        );
+      }
+
+      if(cell.ground==="road"){
+        graphics.strokeStyle="rgba(176,163,82,.72)";
+        graphics.lineWidth=2;
+
+        if(cell.lx===3&&cell.ly>=ROAD){
+          const a=cachePoint(lx+.5,ly);
+          const b=cachePoint(lx+.5,ly+1);
+
+          graphics.beginPath();
+          graphics.moveTo(a.x,a.y);
+          graphics.lineTo(b.x,b.y);
+          graphics.stroke();
+        }
+
+        if(cell.ly===3&&cell.lx>=ROAD){
+          const a=cachePoint(lx,ly+.5);
+          const b=cachePoint(lx+1,ly+.5);
+
+          graphics.beginPath();
+          graphics.moveTo(a.x,a.y);
+          graphics.lineTo(b.x,b.y);
+          graphics.stroke();
+        }
+      }
     }
   }
 
-  return false;
+  return{
+    canvas:layer,
+    last:frameNumber
+  };
 }
+
+function getRenderChunk(rx,ry){
+  const key=cellKey(rx,ry);
+
+  if(!renderCache.has(key)){
+    renderCache.set(
+      key,
+      buildRenderChunk(rx,ry)
+    );
+  }
+
+  const cached=renderCache.get(key);
+  cached.last=frameNumber;
+
+  return cached.canvas;
+}
+
+function drawCachedChunk(rx,ry){
+  const layer=getRenderChunk(rx,ry);
+  const origin=project(
+    rx*RENDER_CHUNK,
+    ry*RENDER_CHUNK,
+    0
+  );
+
+  ctx.drawImage(
+    layer,
+    Math.round(
+      origin.x-
+      RENDER_CHUNK*TILE_W/2-
+      8
+    ),
+    Math.round(origin.y-8)
+  );
+}
+
+function pruneCaches(){
+  if(renderCache.size>90){
+    const oldest=[...renderCache]
+      .sort((a,b)=>a[1].last-b[1].last)
+      .slice(0,renderCache.size-72);
+
+    for(const[key]of oldest){
+      renderCache.delete(key);
+    }
+  }
+
+  if(worldChunks.size>50){
+    const pcx=Math.floor(player.x/WORLD_CHUNK);
+    const pcy=Math.floor(player.y/WORLD_CHUNK);
+
+    for(const[key,chunk]of worldChunks){
+      if(
+        Math.abs(chunk.cx-pcx)>4||
+        Math.abs(chunk.cy-pcy)>4
+      ){
+        worldChunks.delete(key);
+      }
+    }
+  }
+}
+
+/* COLLISION AND INPUT */
+
+const player={
+  x:SPAWN_X,
+  y:SPAWN_Y,
+  w:.62,
+  h:.62,
+  stamina:100,
+  moving:false,
+  facing:"down",
+  step:0
+};
 
 const keys={};
 
@@ -872,6 +1235,32 @@ let touchY=0;
 let touchRun=false;
 let started=false;
 let playing=false;
+
+function isSolid(tx,ty){
+  const cx=Math.floor(tx/WORLD_CHUNK);
+  const cy=Math.floor(ty/WORLD_CHUNK);
+  const lx=mod(tx,WORLD_CHUNK);
+  const ly=mod(ty,WORLD_CHUNK);
+
+  return getWorldChunk(cx,cy)
+    .solid
+    .has(cellKey(lx,ly));
+}
+
+function collisionAt(x,y){
+  const left=Math.floor(x-player.w/2);
+  const right=Math.floor(x+player.w/2-.001);
+  const top=Math.floor(y-player.h/2);
+  const bottom=Math.floor(y+player.h/2-.001);
+
+  for(let ty=top;ty<=bottom;ty++){
+    for(let tx=left;tx<=right;tx++){
+      if(isSolid(tx,ty))return true;
+    }
+  }
+
+  return false;
+}
 
 addEventListener("keydown",event=>{
   if(event.key==="Escape"&&started){
@@ -889,8 +1278,8 @@ addEventListener("keyup",event=>{
 });
 
 addEventListener("blur",()=>{
-  for(const keyName in keys){
-    keys[keyName]=false;
+  for(const key in keys){
+    keys[key]=false;
   }
 
   touchX=0;
@@ -898,1265 +1287,1377 @@ addEventListener("blur",()=>{
   touchRun=false;
 });
 
-function update(deltaTime){
-  let movementX=
+function findBuildingAt(x,y){
+  const cx=Math.floor(x/WORLD_CHUNK);
+  const cy=Math.floor(y/WORLD_CHUNK);
+  const lx=Math.floor(mod(x,WORLD_CHUNK));
+  const ly=Math.floor(mod(y,WORLD_CHUNK));
+
+  return getWorldChunk(cx,cy)
+    .buildings
+    .find(building=>
+      building.cells.has(cellKey(lx,ly))
+    )||null;
+}
+
+function update(dt){
+  let screenDX=
     (keys.d||keys.arrowright?1:0)-
     (keys.a||keys.arrowleft?1:0)+
     touchX;
 
-  let movementY=
+  let screenDY=
     (keys.s||keys.arrowdown?1:0)-
     (keys.w||keys.arrowup?1:0)+
     touchY;
 
-  const magnitude=Math.hypot(movementX,movementY);
+  let worldDX=screenDY+screenDX;
+  let worldDY=screenDY-screenDX;
 
-  if(magnitude>1){
-    movementX/=magnitude;
-    movementY/=magnitude;
+  const length=Math.hypot(worldDX,worldDY);
+
+  if(length>0){
+    worldDX/=length;
+    worldDY/=length;
   }
 
   const running=
     (keys.shift||touchRun)&&
     player.stamina>0&&
-    magnitude>.05;
+    length>.05;
 
-  const speed=running?SPRINT:WALK;
+  const speed=running
+    ?SPRINT_SPEED
+    :WALK_SPEED;
 
-  player.moving=magnitude>.05;
+  player.moving=length>.05;
 
   if(running){
     player.stamina=Math.max(
       0,
-      player.stamina-24*deltaTime
+      player.stamina-22*dt
     );
   }else{
     player.stamina=Math.min(
       100,
-      player.stamina+12*deltaTime
+      player.stamina+11*dt
     );
   }
 
-  if(Math.abs(movementX)>.05){
-    player.facing=movementX>0?"right":"left";
+  if(player.moving){
+    player.step+=dt*speed*5;
+
+    player.facing=
+      Math.abs(screenDX)>Math.abs(screenDY)
+        ?screenDX>0?"right":"left"
+        :screenDY>0?"down":"up";
   }
 
-  if(Math.abs(movementY)>Math.abs(movementX)){
-    player.facing=movementY>0?"down":"up";
+  const nx=player.x+worldDX*speed*dt;
+  const ny=player.y+worldDY*speed*dt;
+
+  if(!collisionAt(nx,player.y)){
+    player.x=nx;
   }
 
-  const nextX=player.x+movementX*speed*deltaTime;
-  const nextY=player.y+movementY*speed*deltaTime;
-
-  if(!collides(nextX,player.y)){
-    player.x=nextX;
+  if(!collisionAt(player.x,ny)){
+    player.y=ny;
   }
 
-  if(!collides(player.x,nextY)){
-    player.y=nextY;
-  }
-
-  camera.x+=(player.x-camera.x)*Math.min(1,deltaTime*9);
-  camera.y+=(player.y-camera.y)*Math.min(1,deltaTime*9);
+  camera.x+=(player.x-camera.x)*Math.min(1,dt*7);
+  camera.y+=(player.y-camera.y)*Math.min(1,dt*7);
 
   document.querySelector("#stamina").style.width=
     player.stamina+"%";
 
-  const chunkX=Math.floor(player.x/CHUNK_PX);
-  const chunkY=Math.floor(player.y/CHUNK_PX);
+  const cx=Math.floor(player.x/WORLD_CHUNK);
+  const cy=Math.floor(player.y/WORLD_CHUNK);
+  const chunk=getWorldChunk(cx,cy);
 
   document.querySelector("#area").textContent=
     "NEW DAWN CITY • "+
-    getChunk(chunkX,chunkY).district.toUpperCase();
-
-  pruneChunks(chunkX,chunkY);
+    chunk.district.toUpperCase();
 }
 
-function pruneChunks(centerX,centerY){
-  if(chunks.size<90)return;
+/* DYNAMIC 2.5D RENDERING */
 
-  for(const [chunkKey,chunk] of chunks){
-    if(
-      Math.abs(chunk.cx-centerX)>5||
-      Math.abs(chunk.cy-centerY)>5
-    ){
-      chunks.delete(chunkKey);
-    }
+const WALL_COLORS={
+  brick:{
+    top:"#765a47",
+    east:"#493529",
+    south:"#5b4032"
+  },
+  plaster:{
+    top:"#85837a",
+    east:"#4d4d49",
+    south:"#62615b"
+  },
+  storeWall:{
+    top:"#827969",
+    east:"#48433b",
+    south:"#60584d"
+  },
+  policeWall:{
+    top:"#637985",
+    east:"#34464e",
+    south:"#465d67"
+  },
+  fence:{
+    top:"#8a8d87",
+    east:"#4f5451",
+    south:"#676c68"
+  }
+};
+
+const ROOF_COLORS={
+  house:["#5d4740","#684e45","#75584b"],
+  apartment:["#494b4a","#545655","#5c5d59"],
+  deli:["#514b43","#5e574d","#686054"],
+  police:["#3f4b51","#48565c","#53636a"]
+};
+
+function tileCorners(x,y,z){
+  return[
+    project(x,y,z),
+    project(x+1,y,z),
+    project(x+1,y+1,z),
+    project(x,y+1,z)
+  ];
+}
+
+function windowOnFace(
+  topA,
+  topB,
+  baseB,
+  baseA,
+  alpha,
+  start=.3,
+  end=.69
+){
+  const upperLeft=lerpPoint(topA,baseA,start);
+  const upperRight=lerpPoint(topB,baseB,start);
+  const lowerRight=lerpPoint(topB,baseB,end);
+  const lowerLeft=lerpPoint(topA,baseA,end);
+
+  const a=lerpPoint(upperLeft,upperRight,.16);
+  const b=lerpPoint(upperLeft,upperRight,.84);
+  const c=lerpPoint(lowerLeft,lowerRight,.84);
+  const d=lerpPoint(lowerLeft,lowerRight,.16);
+
+  quad(ctx,a,b,c,d,"#71959c",alpha);
+
+  const shine=lerpPoint(a,c,.32);
+
+  ctx.save();
+  ctx.globalAlpha=alpha*.7;
+  ctx.fillStyle="#d1dedb";
+  ctx.fillRect(shine.x-1,shine.y-1,3,2);
+  ctx.restore();
+}
+
+function floorBand(topA,topB,baseB,baseA,alpha){
+  const a=lerpPoint(topA,baseA,.485);
+  const b=lerpPoint(topB,baseB,.485);
+  const c=lerpPoint(topB,baseB,.515);
+  const d=lerpPoint(topA,baseA,.515);
+
+  quad(ctx,a,b,c,d,"#303433",alpha*.62);
+}
+
+function drawWallItem(item){
+  const height=
+    item.type==="fence"
+      ?1.05
+      :item.height||WALL_HEIGHT;
+
+  const base=tileCorners(item.x,item.y,0);
+  const top=tileCorners(item.x,item.y,height);
+
+  const colors=
+    WALL_COLORS[item.type]||
+    WALL_COLORS.plaster;
+
+  const alpha=item.alpha;
+
+  quad(
+    ctx,
+    top[1],top[2],
+    base[2],base[1],
+    colors.east,
+    alpha
+  );
+
+  quad(
+    ctx,
+    top[2],top[3],
+    base[3],base[2],
+    colors.south,
+    alpha
+  );
+
+  quad(
+    ctx,
+    top[0],top[1],
+    top[2],top[3],
+    colors.top,
+    alpha
+  );
+
+  if(item.window&&height>4.4){
+    windowOnFace(
+      top[1],top[2],
+      base[2],base[1],
+      alpha,.15,.38
+    );
+
+    windowOnFace(
+      top[2],top[3],
+      base[3],base[2],
+      alpha,.15,.38
+    );
+
+    windowOnFace(
+      top[1],top[2],
+      base[2],base[1],
+      alpha,.6,.82
+    );
+
+    windowOnFace(
+      top[2],top[3],
+      base[3],base[2],
+      alpha,.6,.82
+    );
+
+    floorBand(
+      top[1],top[2],
+      base[2],base[1],
+      alpha
+    );
+
+    floorBand(
+      top[2],top[3],
+      base[3],base[2],
+      alpha
+    );
+  }else if(item.window&&height>1.2){
+    windowOnFace(
+      top[1],top[2],
+      base[2],base[1],
+      alpha
+    );
+
+    windowOnFace(
+      top[2],top[3],
+      base[3],base[2],
+      alpha
+    );
   }
 }
 
-/* DRAWING */
-
-const screenX=x=>Math.round(x-camera.x+SW/2);
-const screenY=y=>Math.round(y-camera.y+SH/2);
-
-function fillWorld(x,y,w,h,color){
+function roofTriangle(a,b,c,color,alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha;
   ctx.fillStyle=color;
-
-  ctx.fillRect(
-    screenX(x),
-    screenY(y),
-    Math.ceil(w),
-    Math.ceil(h)
-  );
-}
-
-function drawBase(chunk){
-  const originX=chunk.cx*CHUNK_PX;
-  const originY=chunk.cy*CHUNK_PX;
-
-  fillWorld(originX,originY,CHUNK_PX,CHUNK_PX,COLORS.lot);
-  fillWorld(originX,originY,ROAD*PX,CHUNK_PX,COLORS.road);
-  fillWorld(originX,originY,CHUNK_PX,ROAD*PX,COLORS.road);
-
-  fillWorld(
-    originX+ROAD*PX,
-    originY+ROAD*PX,
-    2*PX,
-    (BLOCK-ROAD)*PX,
-    COLORS.sidewalk
-  );
-
-  fillWorld(
-    originX+ROAD*PX,
-    originY+ROAD*PX,
-    (BLOCK-ROAD)*PX,
-    2*PX,
-    COLORS.sidewalk
-  );
-
-  fillWorld(
-    originX+(BLOCK-2)*PX,
-    originY+ROAD*PX,
-    2*PX,
-    (BLOCK-ROAD)*PX,
-    COLORS.sidewalk
-  );
-
-  fillWorld(
-    originX+ROAD*PX,
-    originY+(BLOCK-2)*PX,
-    (BLOCK-ROAD)*PX,
-    2*PX,
-    COLORS.sidewalk
-  );
-
-  ctx.fillStyle=COLORS.line;
-
-  for(let y=ROAD+2;y<BLOCK;y+=4){
-    ctx.fillRect(
-      screenX(originX+3.94*PX),
-      screenY(originY+y*PX),
-      2,
-      2*PX
-    );
-  }
-
-  for(let x=ROAD+2;x<BLOCK;x+=4){
-    ctx.fillRect(
-      screenX(originX+x*PX),
-      screenY(originY+3.94*PX),
-      2*PX,
-      2
-    );
-  }
-
-  ctx.fillStyle="#b7b6ad";
-
-  for(let i=0;i<ROAD;i+=2){
-    ctx.fillRect(
-      screenX(originX+i*PX)+3,
-      screenY(originY+(ROAD-1)*PX),
-      PX-6,
-      5
-    );
-
-    ctx.fillRect(
-      screenX(originX+(ROAD-1)*PX),
-      screenY(originY+i*PX)+3,
-      5,
-      PX-6
-    );
-  }
-}
-
-function drawStreetDetails(chunk){
-  const originX=chunk.cx*CHUNK_PX;
-  const originY=chunk.cy*CHUNK_PX;
-
-  ctx.fillStyle="rgba(0,0,0,.28)";
-
-  ctx.fillRect(
-    screenX(originX+BUILD_MIN*PX)-3,
-    screenY(originY+ROAD*PX),
-    4,
-    (BLOCK-ROAD)*PX
-  );
-
-  ctx.fillRect(
-    screenX(originX+ROAD*PX),
-    screenY(originY+BUILD_MIN*PX)-3,
-    (BLOCK-ROAD)*PX,
-    4
-  );
-
-  ctx.fillRect(
-    screenX(originX+(BLOCK-2)*PX)-3,
-    screenY(originY+ROAD*PX),
-    4,
-    (BLOCK-ROAD)*PX
-  );
-
-  ctx.fillRect(
-    screenX(originX+ROAD*PX),
-    screenY(originY+(BLOCK-2)*PX)-3,
-    (BLOCK-ROAD)*PX,
-    4
-  );
-
-  ctx.strokeStyle="rgba(30,32,30,.32)";
-  ctx.lineWidth=1;
-
-  for(let y=ROAD;y<BLOCK;y+=2){
-    ctx.beginPath();
-    ctx.moveTo(
-      screenX(originX+ROAD*PX),
-      screenY(originY+y*PX)
-    );
-    ctx.lineTo(
-      screenX(originX+BUILD_MIN*PX),
-      screenY(originY+y*PX)
-    );
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(
-      screenX(originX+(BLOCK-2)*PX),
-      screenY(originY+y*PX)
-    );
-    ctx.lineTo(
-      screenX(originX+BLOCK*PX),
-      screenY(originY+y*PX)
-    );
-    ctx.stroke();
-  }
-
-  for(let x=ROAD;x<BLOCK;x+=2){
-    ctx.beginPath();
-    ctx.moveTo(
-      screenX(originX+x*PX),
-      screenY(originY+ROAD*PX)
-    );
-    ctx.lineTo(
-      screenX(originX+x*PX),
-      screenY(originY+BUILD_MIN*PX)
-    );
-    ctx.stroke();
-  }
-
-  ctx.fillStyle="rgba(125,128,120,.12)";
-
-  for(let i=0;i<18;i++){
-    const randomX=rand(chunk.cx,chunk.cy,900+i);
-    const randomY=rand(chunk.cx,chunk.cy,940+i);
-
-    if(randomX<.5){
-      ctx.fillRect(
-        screenX(originX+(1+randomX*12)*PX),
-        screenY(originY+(ROAD+randomY*(BLOCK-ROAD))*PX),
-        2+randomX*5,
-        8+randomY*15
-      );
-    }else{
-      ctx.fillRect(
-        screenX(originX+(ROAD+randomX*(BLOCK-ROAD))*PX),
-        screenY(originY+(1+randomY*12)*PX),
-        8+randomX*15,
-        2+randomY*5
-      );
-    }
-  }
-}
-
-/* BUILDING DEPTH */
-
-const WALL_DARK={
-  brick:"#2f2722",
-  concrete:"#303231",
-  storeWall:"#36332e",
-  policeWall:"#253137"
-};
-
-const WALL_LIGHT={
-  brick:"#70594a",
-  concrete:"#6a6d69",
-  storeWall:"#777064",
-  policeWall:"#5b727d"
-};
-
-const FLOOR_LIGHT={
-  house:"#877a68",
-  apartment:"#77736a",
-  deli:"#7d745f",
-  police:"#748083"
-};
-
-function buildingDepth(type){
-  return type==="apartment"?18:
-         type==="police"?15:
-         type==="deli"?11:
-         8;
-}
-
-function drawBuildingShadow(originX,originY,building){
-  const x=screenX(originX+building.x*PX);
-  const y=screenY(originY+building.y*PX);
-  const width=building.w*PX;
-  const height=building.h*PX;
-  const depth=buildingDepth(building.type);
-
-  ctx.fillStyle="rgba(0,0,0,.36)";
-  ctx.fillRect(
-    x+depth,
-    y+depth,
-    width,
-    height
-  );
-
-  ctx.fillStyle=WALL_DARK[building.wallType];
-
-  ctx.fillRect(
-    x+Math.floor(depth*.45),
-    y+Math.floor(depth*.45),
-    width,
-    height
-  );
-}
-
-function drawFloor(originX,originY,building){
-  const x=screenX(originX+(building.x+1)*PX);
-  const y=screenY(originY+(building.y+1)*PX);
-  const width=(building.w-2)*PX;
-  const height=(building.h-2)*PX;
-
-  const gradient=
-    ctx.createLinearGradient(x,y,x+width,y+height);
-
-  gradient.addColorStop(
-    0,
-    FLOOR_LIGHT[building.type]
-  );
-
-  gradient.addColorStop(
-    1,
-    building.floor
-  );
-
-  ctx.fillStyle=gradient;
-  ctx.fillRect(x,y,width,height);
-
-  ctx.save();
   ctx.beginPath();
-  ctx.rect(x,y,width,height);
-  ctx.clip();
-
-  ctx.strokeStyle="rgba(20,22,21,.13)";
-  ctx.lineWidth=1;
-
-  if(building.type==="house"){
-    for(let py=y+PX/2;py<y+height;py+=PX/2){
-      ctx.beginPath();
-      ctx.moveTo(x,py);
-      ctx.lineTo(x+width,py);
-      ctx.stroke();
-    }
-
-    for(let px=x+PX*2;px<x+width;px+=PX*2){
-      ctx.beginPath();
-      ctx.moveTo(px,y);
-      ctx.lineTo(px,y+height);
-      ctx.stroke();
-    }
-  }else{
-    const step=
-      building.type==="deli"?PX:PX*2;
-
-    for(let px=x;px<x+width;px+=step){
-      ctx.beginPath();
-      ctx.moveTo(px,y);
-      ctx.lineTo(px,y+height);
-      ctx.stroke();
-    }
-
-    for(let py=y;py<y+height;py+=step){
-      ctx.beginPath();
-      ctx.moveTo(x,py);
-      ctx.lineTo(x+width,py);
-      ctx.stroke();
-    }
-  }
-
+  ctx.moveTo(a.x,a.y);
+  ctx.lineTo(b.x,b.y);
+  ctx.lineTo(c.x,c.y);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
 }
 
-function drawWallBlock(originX,originY,x,y,type){
-  const pixelX=screenX(originX+x*PX);
-  const pixelY=screenY(originY+y*PX);
+function drawPitchedRoof(item){
+  const{x,y,w,h,z,alpha}=item;
 
-  ctx.fillStyle="rgba(0,0,0,.38)";
-  ctx.fillRect(
-    pixelX+5,
-    pixelY+7,
-    PX+1,
-    PX+1
+  const rise=Math.min(
+    2.35,
+    Math.min(w,h)*.2
   );
 
-  ctx.fillStyle=WALL_DARK[type];
-  ctx.fillRect(
-    pixelX+3,
-    pixelY+4,
-    PX+1,
-    PX+1
-  );
+  const palette=ROOF_COLORS.house;
+  const dark=palette[0];
+  const light=palette[2];
+  const fascia="#493831";
 
-  ctx.fillStyle=COLORS[type];
-  ctx.fillRect(
-    pixelX,
-    pixelY,
-    PX+1,
-    PX+1
-  );
+  let outlines=[];
 
-  ctx.fillStyle=WALL_LIGHT[type];
-  ctx.fillRect(pixelX+2,pixelY+2,PX-3,3);
-  ctx.fillRect(pixelX+2,pixelY+2,3,PX-3);
+  if(w<=h){
+    const l0=project(x,y,z);
+    const l1=project(x,y+h,z);
+    const r0=project(x+w,y,z);
+    const r1=project(x+w,y+h,z);
+    const n=project(x+w/2,y,z+rise);
+    const s=project(x+w/2,y+h,z+rise);
 
-  ctx.fillStyle="rgba(0,0,0,.2)";
-  ctx.fillRect(pixelX+3,pixelY+PX-4,PX-3,4);
-  ctx.fillRect(pixelX+PX-4,pixelY+3,4,PX-3);
-}
+    quad(ctx,l0,n,s,l1,dark,alpha);
+    quad(ctx,n,r0,r1,s,light,alpha);
+    roofTriangle(l1,s,r1,fascia,alpha);
 
-function doorAt(building,x,y){
-  return building.doors.some(
-    door=>door.x===x&&door.y===y
-  );
-}
+    outlines=[l0,n,r0,r1,s,l1,l0];
 
-function drawHorizontalWindow(x,y,width=PX-7){
-  ctx.fillStyle="#142227";
-  ctx.fillRect(x+2,y+2,width,9);
+    ctx.save();
+    ctx.globalAlpha=alpha*.28;
+    ctx.strokeStyle="#ead9c1";
+    ctx.lineWidth=1;
 
-  ctx.fillStyle="#70949b";
-  ctx.fillRect(x+3,y+3,width-2,5);
+    for(let i=1;i<5;i++){
+      const t=i/5;
+      const a=lerpPoint(l0,n,t);
+      const b=lerpPoint(l1,s,t);
+      const c=lerpPoint(r0,n,t);
+      const d=lerpPoint(r1,s,t);
 
-  ctx.fillStyle="#c2d5d3";
-  ctx.fillRect(
-    x+4,
-    y+4,
-    Math.max(2,(width-5)*.35),
-    2
-  );
-
-  ctx.fillStyle="#202324";
-  ctx.fillRect(x+2,y+11,width,3);
-}
-
-function drawVerticalWindow(x,y,height=PX-7){
-  ctx.fillStyle="#142227";
-  ctx.fillRect(x+2,y+2,9,height);
-
-  ctx.fillStyle="#70949b";
-  ctx.fillRect(x+3,y+3,5,height-2);
-
-  ctx.fillStyle="#c2d5d3";
-  ctx.fillRect(
-    x+4,
-    y+4,
-    2,
-    Math.max(2,(height-5)*.35)
-  );
-
-  ctx.fillStyle="#202324";
-  ctx.fillRect(x+11,y+2,3,height);
-}
-
-function drawFacade(originX,originY,building){
-  const buildingX=screenX(originX+building.x*PX);
-  const buildingY=screenY(originY+building.y*PX);
-  const buildingWidth=building.w*PX;
-  const buildingHeight=building.h*PX;
-
-  const spacing=
-    building.type==="apartment"?3:
-    building.type==="police"?4:
-    5;
-
-  ctx.strokeStyle=WALL_LIGHT[building.wallType];
-  ctx.lineWidth=2;
-
-  ctx.strokeRect(
-    buildingX+2,
-    buildingY+2,
-    buildingWidth-4,
-    buildingHeight-4
-  );
-
-  ctx.strokeStyle=WALL_DARK[building.wallType];
-
-  ctx.strokeRect(
-    buildingX+6,
-    buildingY+6,
-    buildingWidth-12,
-    buildingHeight-12
-  );
-
-  for(
-    let tileX=building.x+2;
-    tileX<building.x+building.w-2;
-    tileX+=spacing
-  ){
-    if(!doorAt(building,tileX,building.y)){
-      drawHorizontalWindow(
-        screenX(originX+tileX*PX),
-        screenY(originY+building.y*PX)+5
-      );
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      ctx.lineTo(b.x,b.y);
+      ctx.moveTo(c.x,c.y);
+      ctx.lineTo(d.x,d.y);
+      ctx.stroke();
     }
 
-    if(
-      !doorAt(
-        building,
-        tileX,
-        building.y+building.h-1
-      )
-    ){
-      drawHorizontalWindow(
-        screenX(originX+tileX*PX),
-        screenY(
-          originY+
-          (building.y+building.h-1)*PX
-        )+5
-      );
+    ctx.restore();
+  }else{
+    const t0=project(x,y,z);
+    const t1=project(x+w,y,z);
+    const b0=project(x,y+h,z);
+    const b1=project(x+w,y+h,z);
+    const l=project(x,y+h/2,z+rise);
+    const r=project(x+w,y+h/2,z+rise);
+
+    quad(ctx,t0,t1,r,l,dark,alpha);
+    quad(ctx,l,r,b1,b0,light,alpha);
+    roofTriangle(t1,r,b1,fascia,alpha);
+
+    outlines=[t0,t1,r,b1,b0,l,t0];
+
+    ctx.save();
+    ctx.globalAlpha=alpha*.28;
+    ctx.strokeStyle="#ead9c1";
+    ctx.lineWidth=1;
+
+    for(let i=1;i<5;i++){
+      const t=i/5;
+      const a=lerpPoint(t0,l,t);
+      const b=lerpPoint(t1,r,t);
+      const c=lerpPoint(b0,l,t);
+      const d=lerpPoint(b1,r,t);
+
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      ctx.lineTo(b.x,b.y);
+      ctx.moveTo(c.x,c.y);
+      ctx.lineTo(d.x,d.y);
+      ctx.stroke();
     }
+
+    ctx.restore();
   }
 
-  for(
-    let tileY=building.y+2;
-    tileY<building.y+building.h-2;
-    tileY+=spacing
-  ){
-    if(!doorAt(building,building.x,tileY)){
-      drawVerticalWindow(
-        screenX(originX+building.x*PX)+5,
-        screenY(originY+tileY*PX)
-      );
-    }
-
-    if(
-      !doorAt(
-        building,
-        building.x+building.w-1,
-        tileY
-      )
-    ){
-      drawVerticalWindow(
-        screenX(
-          originX+
-          (building.x+building.w-1)*PX
-        )+5,
-        screenY(originY+tileY*PX)
-      );
-    }
-  }
-
-  if(building.type==="apartment"){
-    ctx.fillStyle="#88877e";
-
-    for(
-      let tileX=building.x+1;
-      tileX<building.x+building.w-1;
-      tileX+=2
-    ){
-      ctx.fillRect(
-        screenX(originX+tileX*PX),
-        buildingY-4,
-        PX,
-        6
-      );
-    }
-  }
-
-  if(building.type==="police"){
-    ctx.fillStyle="#293f55";
-
-    ctx.fillRect(
-      buildingX+PX*2,
-      buildingY-7,
-      buildingWidth-PX*4,
-      9
-    );
-
-    ctx.fillStyle="#aabcc4";
-
-    ctx.fillRect(
-      buildingX+PX*2,
-      buildingY-7,
-      buildingWidth-PX*4,
-      2
-    );
-  }
-}
-
-function drawAwning(x,y,side){
   ctx.save();
-  ctx.fillStyle="#8b433a";
+  ctx.globalAlpha=alpha*.8;
+  ctx.strokeStyle="#251f1c";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(outlines[0].x,outlines[0].y);
 
-  if(side==="top"||side==="bottom"){
-    const awningY=
-      side==="top"?y-11:y+PX;
-
-    ctx.fillRect(
-      x-PX,
-      awningY,
-      PX*3,
-      10
-    );
-
-    ctx.fillStyle="#d9caa7";
-
-    for(let index=0;index<6;index+=2){
-      ctx.fillRect(
-        x-PX+index*PX/2,
-        awningY,
-        PX/2,
-        10
-      );
-    }
-  }else{
-    const awningX=
-      side==="left"?x-11:x+PX;
-
-    ctx.fillRect(
-      awningX,
-      y-PX,
-      10,
-      PX*3
-    );
-
-    ctx.fillStyle="#d9caa7";
-
-    for(let index=0;index<6;index+=2){
-      ctx.fillRect(
-        awningX,
-        y-PX+index*PX/2,
-        10,
-        PX/2
-      );
-    }
+  for(let i=1;i<outlines.length;i++){
+    ctx.lineTo(outlines[i].x,outlines[i].y);
   }
 
+  ctx.stroke();
   ctx.restore();
 }
 
-function drawDoor(originX,originY,building,door){
-  const x=screenX(originX+door.x*PX);
-  const y=screenY(originY+door.y*PX);
-
-  ctx.fillStyle="#2a2019";
-  ctx.fillRect(x+2,y+2,PX-4,PX-4);
-
-  ctx.fillStyle=COLORS.door;
-  ctx.fillRect(x+4,y+3,PX-8,PX-7);
-
-  ctx.fillStyle="#ad8a60";
-  ctx.fillRect(x+PX-8,y+PX/2,3,3);
-
-  ctx.fillStyle="#8a8b83";
-
-  if(door.side==="top"){
-    ctx.fillRect(x-3,y-8,PX+6,7);
-  }
-
-  if(door.side==="bottom"){
-    ctx.fillRect(x-3,y+PX,PX+6,7);
-  }
-
-  if(door.side==="left"){
-    ctx.fillRect(x-8,y-3,7,PX+6);
-  }
-
-  if(door.side==="right"){
-    ctx.fillRect(x+PX,y-3,7,PX+6);
-  }
-
-  if(building.type==="deli"){
-    drawAwning(x,y,door.side);
-  }
-
-  if(building.type!=="house"){
-    const label=
-      building.type==="police"?"NDPD":
-      building.type==="deli"?"DELI":
-      "APTS";
-
-    ctx.fillStyle=
-      building.type==="police"
-        ?"#213b53"
-        :"#3a3027";
-
-    ctx.fillRect(
-      x-PX*.55,
-      y-13,
-      PX*2.1,
-      11
-    );
-
-    ctx.fillStyle="#f1ead2";
-    ctx.font="bold 8px Courier New";
-    ctx.textAlign="center";
-
-    ctx.fillText(
-      label,
-      x+PX/2,
-      y-5
-    );
-  }
-}
-
-function drawFeatures(chunk){
-  const originX=chunk.cx*CHUNK_PX;
-  const originY=chunk.cy*CHUNK_PX;
-
-  for(const lot of chunk.lots){
-    fillWorld(
-      originX+lot.x*PX,
-      originY+lot.y*PX,
-      lot.w*PX,
-      lot.h*PX,
-      COLORS[lot.ground]
-    );
-
-    ctx.strokeStyle="rgba(10,12,11,.24)";
-
-    ctx.strokeRect(
-      screenX(originX+lot.x*PX),
-      screenY(originY+lot.y*PX),
-      lot.w*PX,
-      lot.h*PX
-    );
-  }
-
-  for(const building of chunk.buildings){
-    drawBuildingShadow(
-      originX,
-      originY,
-      building
-    );
-  }
-
-  for(const building of chunk.buildings){
-    drawFloor(
-      originX,
-      originY,
-      building
-    );
-  }
-
-  for(const [wallKey,type] of chunk.walls){
-    const [x,y]=wallKey.split(",").map(Number);
-
-    drawWallBlock(
-      originX,
-      originY,
-      x,
-      y,
-      type
-    );
-  }
-
-  for(const building of chunk.buildings){
-    drawFacade(
-      originX,
-      originY,
-      building
-    );
-
-    for(const door of building.doors){
-      drawDoor(
-        originX,
-        originY,
-        building,
-        door
-      );
-    }
-  }
-
-  for(const prop of chunk.props){
-    drawProp(originX,originY,prop);
-  }
-}
-
-/* PROPS */
-
-function drawProp(originX,originY,prop){
-  const x=screenX(originX+prop.x*PX);
-  const y=screenY(originY+prop.y*PX);
-  const width=prop.w*PX;
-  const height=prop.h*PX;
-
-  if(prop.kind==="tree"){
-    ctx.fillStyle="rgba(0,0,0,.32)";
-    ctx.beginPath();
-    ctx.ellipse(
-      x+PX,
-      y+PX,
-      PX*1.3,
-      PX*.75,
-      0,
-      0,
-      Math.PI*2
-    );
-    ctx.fill();
-
-    ctx.fillStyle="#3b2c1e";
-
-    ctx.fillRect(
-      x+PX*.38,
-      y+PX*.35,
-      PX*.24,
-      PX*.9
-    );
-
-    ctx.fillStyle="#203a21";
-    ctx.beginPath();
-    ctx.arc(
-      x+PX*.5,
-      y+PX*.1,
-      PX*1.35,
-      0,
-      Math.PI*2
-    );
-    ctx.fill();
-
-    ctx.fillStyle="#3a603b";
-    ctx.beginPath();
-    ctx.arc(
-      x+PX*.1,
-      y-PX*.25,
-      PX*.8,
-      0,
-      Math.PI*2
-    );
-    ctx.fill();
-
+function drawRoofItem(item){
+  if(item.pitched){
+    drawPitchedRoof(item);
     return;
   }
 
-  if(
-    prop.kind==="car"||
-    prop.kind==="policeCar"
-  ){
-    drawCar(
-      x,
-      y,
-      width,
-      height,
-      prop.kind==="policeCar",
-      prop
-    );
+  const w=item.w||1;
+  const h=item.h||1;
 
-    return;
-  }
-
-  if(prop.kind==="rug"||prop.kind==="mat"){
-    ctx.fillStyle=
-      prop.kind==="rug"
-        ?"#55484b"
-        :"#343636";
-
-    ctx.fillRect(
-      x+3,
-      y+3,
-      width-6,
-      height-6
-    );
-
-    ctx.strokeStyle="#8b786b";
-
-    ctx.strokeRect(
-      x+6,
-      y+6,
-      width-12,
-      height-12
-    );
-
-    return;
-  }
-
-  const colors={
-    bed:"#776b5c",
-    dresser:"#574432",
-    sofa:"#5c5149",
-    table:"#624d3a",
-    kitchen:"#706958",
-    mail:"#474b49",
-    shelf:"#5b4938",
-    counter:"#514334",
-    cooler:"#647a7d",
-    freezer:"#66787a",
-    desk:"#554739",
-    bench:"#67513c",
-    evidence:"#4a4f47",
-    locker:"#4c5658",
-    bars:"#747b7c",
-    dumpster:"#34413a"
-  };
-
-  const innerWidth=Math.max(3,width-6);
-  const innerHeight=Math.max(3,height-6);
-
-  ctx.fillStyle="rgba(0,0,0,.35)";
-
-  ctx.fillRect(
-    x+7,
-    y+8,
-    innerWidth,
-    innerHeight
-  );
-
-  ctx.fillStyle=
-    colors[prop.kind]||"#57504a";
-
-  ctx.fillRect(
-    x+3,
-    y+3,
-    innerWidth,
-    innerHeight
-  );
-
-  ctx.fillStyle="rgba(255,255,255,.13)";
-
-  ctx.fillRect(
-    x+5,
-    y+5,
-    Math.max(2,innerWidth-4),
-    3
-  );
-
-  ctx.strokeStyle="#17191a";
-
-  ctx.strokeRect(
-    x+3,
-    y+3,
-    innerWidth,
-    innerHeight
-  );
-
-  if(prop.kind==="bed"){
-    ctx.fillStyle="#c4b59b";
-
-    ctx.fillRect(
-      x+6,
-      y+6,
-      innerWidth-6,
-      Math.min(10,innerHeight*.25)
-    );
-
-    ctx.fillStyle="#665d55";
-
-    ctx.fillRect(
-      x+6,
-      y+Math.max(18,innerHeight*.45),
-      innerWidth-6,
-      3
-    );
-  }
-
-  if(prop.kind==="sofa"){
-    ctx.strokeStyle="#292523";
-    ctx.beginPath();
-    ctx.moveTo(x+width/2,y+5);
-    ctx.lineTo(x+width/2,y+height-5);
-    ctx.stroke();
-  }
-
-  if(prop.kind==="shelf"){
-    ctx.fillStyle="#2c241d";
-
-    for(let py=y+12;py<y+height-6;py+=12){
-      ctx.fillRect(
-        x+5,
-        py,
-        width-10,
-        3
-      );
-    }
-  }
-
-  if(prop.kind==="bars"){
-    ctx.fillStyle="#b0b6b4";
-
-    for(let px=x+6;px<x+width-5;px+=6){
-      ctx.fillRect(
-        px,
-        y+4,
-        2,
-        height-8
-      );
-    }
-  }
-}
-
-function drawCar(x,y,width,height,police,prop){
-  const palette=[
-    "#51575a",
-    "#69413c",
-    "#394c47",
-    "#555047",
-    "#334d5b"
+  const top=[
+    project(item.x,item.y,item.z),
+    project(item.x+w,item.y,item.z),
+    project(item.x+w,item.y+h,item.z),
+    project(item.x,item.y+h,item.z)
   ];
 
-  const bodyColor=
-    police
-      ?"#d7dad5"
-      :palette[
-        hash(prop.x,prop.y,700)%palette.length
-      ];
+  const lower=[
+    project(item.x,item.y,item.z-.12),
+    project(item.x+w,item.y,item.z-.12),
+    project(item.x+w,item.y+h,item.z-.12),
+    project(item.x,item.y+h,item.z-.12)
+  ];
 
-  ctx.fillStyle="rgba(0,0,0,.45)";
+  const palette=ROOF_COLORS[item.buildingType];
 
-  ctx.fillRect(
-    x+7,
-    y+9,
-    width-2,
-    height-2
+  const color=palette[
+    hash(item.x,item.y,910)%palette.length
+  ];
+
+  quad(
+    ctx,
+    top[1],top[2],
+    lower[2],lower[1],
+    "#302d2a",
+    item.alpha
   );
 
-  ctx.fillStyle="#151719";
-
-  ctx.fillRect(
-    x,
-    y+8,
-    width,
-    height-16
+  quad(
+    ctx,
+    top[2],top[3],
+    lower[3],lower[2],
+    "#3a3531",
+    item.alpha
   );
 
-  ctx.fillStyle=bodyColor;
-
-  ctx.fillRect(
-    x+3,
-    y+3,
-    width-6,
-    height-6
+  quad(
+    ctx,
+    top[0],top[1],
+    top[2],top[3],
+    color,
+    item.alpha
   );
 
-  ctx.fillStyle="rgba(255,255,255,.2)";
+  ctx.save();
+  ctx.globalAlpha=item.alpha*.45;
+  ctx.strokeStyle="#1d2222";
+  ctx.lineWidth=item.flat?2:1;
+  ctx.beginPath();
+  ctx.moveTo(top[0].x,top[0].y);
 
-  ctx.fillRect(
-    x+6,
-    y+5,
-    width-12,
-    3
-  );
-
-  ctx.fillStyle="#17252b";
-
-  ctx.fillRect(
-    x+7,
-    y+height*.2,
-    width-14,
-    height*.22
-  );
-
-  ctx.fillRect(
-    x+7,
-    y+height*.56,
-    width-14,
-    height*.2
-  );
-
-  ctx.fillStyle="#8da5aa";
-
-  ctx.fillRect(
-    x+9,
-    y+height*.21,
-    width-18,
-    3
-  );
-
-  ctx.fillStyle="#111";
-
-  for(const wheelY of [12,height-22]){
-    ctx.fillRect(
-      x-2,
-      y+wheelY,
-      6,
-      11
-    );
-
-    ctx.fillRect(
-      x+width-4,
-      y+wheelY,
-      6,
-      11
-    );
+  for(let i=1;i<4;i++){
+    ctx.lineTo(top[i].x,top[i].y);
   }
 
-  ctx.fillStyle="#e2d6a0";
-  ctx.fillRect(x+7,y+3,7,4);
-  ctx.fillRect(x+width-14,y+3,7,4);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
 
-  ctx.fillStyle="#9b302d";
-  ctx.fillRect(x+7,y+height-7,7,4);
-  ctx.fillRect(x+width-14,y+height-7,7,4);
+  if(item.flat&&w>8&&h>8){
+    const edge={
+      top:"#667075",
+      east:"#30383b",
+      south:"#465055"
+    };
 
-  if(police){
-    ctx.fillStyle="#294567";
-
-    ctx.fillRect(
-      x+width/2-4,
-      y+4,
-      8,
-      height-8
+    prism(
+      item.x,item.y,
+      w,.22,.28,
+      edge,item.alpha,
+      item.z+.01
     );
 
-    ctx.fillStyle="#b84641";
-
-    ctx.fillRect(
-      x+width/2-7,
-      y+height/2-3,
-      7,
-      6
+    prism(
+      item.x,item.y,
+      .22,h,.28,
+      edge,item.alpha,
+      item.z+.01
     );
 
-    ctx.fillStyle="#3d6da7";
+    prism(
+      item.x,
+      item.y+h-.22,
+      w,.22,.28,
+      edge,item.alpha,
+      item.z+.01
+    );
 
-    ctx.fillRect(
-      x+width/2,
-      y+height/2-3,
-      7,
-      6
+    prism(
+      item.x+w-.22,
+      item.y,
+      .22,h,.28,
+      edge,item.alpha,
+      item.z+.01
+    );
+
+    const unitX=item.x+w*.38;
+    const unitY=item.y+h*.37;
+
+    prism(
+      unitX,
+      unitY,
+      Math.min(2.4,w*.18),
+      Math.min(2,h*.18),
+      .48,
+      {
+        top:"#767c79",
+        east:"#3c4341",
+        south:"#565d5a"
+      },
+      item.alpha,
+      item.z+.02
     );
   }
 }
 
-/* PLAYER */
+function prism(
+  x,y,w,h,
+  height,
+  colors,
+  alpha=1,
+  baseZ=0
+){
+  const base=[
+    project(x,y,baseZ),
+    project(x+w,y,baseZ),
+    project(x+w,y+h,baseZ),
+    project(x,y+h,baseZ)
+  ];
 
-function drawPlayer(){
-  const x=Math.floor(SW/2);
-  const y=Math.floor(SH/2);
-  const scale=PX/18;
+  const top=[
+    project(x,y,baseZ+height),
+    project(x+w,y,baseZ+height),
+    project(x+w,y+h,baseZ+height),
+    project(x,y+h,baseZ+height)
+  ];
 
-  const bob=
-    player.moving
-      ?Math.round(
-        Math.sin(performance.now()*.018)
-      )
-      :0;
+  quad(
+    ctx,
+    top[1],top[2],
+    base[2],base[1],
+    colors.east,
+    alpha
+  );
+
+  quad(
+    ctx,
+    top[2],top[3],
+    base[3],base[2],
+    colors.south,
+    alpha
+  );
+
+  quad(
+    ctx,
+    top[0],top[1],
+    top[2],top[3],
+    colors.top,
+    alpha
+  );
+}
+
+const PROP_STYLE={
+  bed:{h:.42,top:"#8d7e6e",east:"#51483f",south:"#695d50"},
+  dresser:{h:.9,top:"#72543c",east:"#3d2c21",south:"#543d2c"},
+  sofa:{h:.72,top:"#75675c",east:"#403933",south:"#554a42"},
+  rug:{h:.025,top:"#59484c",east:"#352b2e",south:"#44373a"},
+  kitchen:{h:1.02,top:"#888072",east:"#4a463f",south:"#676057"},
+  table:{h:.76,top:"#795d43",east:"#413123",south:"#5a4431"},
+  stairs:{h:.55,top:"#77736b",east:"#41403d",south:"#5a5752"},
+  mail:{h:1.05,top:"#686b67",east:"#383b39",south:"#4d504d"},
+  shelf:{h:1.48,top:"#71573f",east:"#3b2d21",south:"#55412f"},
+  counter:{h:.92,top:"#735b45",east:"#3d3025",south:"#554434"},
+  cooler:{h:1.45,top:"#829398",east:"#455257",south:"#62747a"},
+  freezer:{h:.86,top:"#89999b",east:"#4a5557",south:"#687779"},
+  crate:{h:.75,top:"#816447",east:"#443524",south:"#604a35"},
+  desk:{h:.78,top:"#6d5541",east:"#3b2e24",south:"#514031"},
+  bench:{h:.58,top:"#74563d",east:"#3d2d21",south:"#57402f"},
+  locker:{h:1.55,top:"#637176",east:"#354045",south:"#4a585d"},
+  evidence:{h:1.24,top:"#646b61",east:"#363b35",south:"#4a5149"},
+  bars:{h:1.5,top:"#929997",east:"#505654",south:"#6d7471"},
+  balcony:{h:.16,top:"#777a75",east:"#3d403e",south:"#575a56"},
+  porch:{h:.14,top:"#80664e",east:"#46372b",south:"#604b3a"},
+  dumpster:{h:1.1,top:"#3d5648",east:"#223329",south:"#2e4137"}
+};
+
+function drawDoorProp(item){
+  const open=item.prop.anim;
+  const side=item.prop.side;
+
+  let hx=item.x;
+  let hy=item.y;
+  let ex=item.x+1;
+  let ey=item.y;
+
+  if(side==="bottom"){
+    hy++;
+    ey=hy;
+    ex=hx+1;
+  }else if(side==="left"){
+    ex=hx;
+    ey=hy+1;
+  }else if(side==="right"){
+    hx++;
+    ex=hx;
+    ey=hy+1;
+  }
+
+  if(open>0){
+    if(side==="top"||side==="bottom"){
+      ex=hx+Math.cos(open*Math.PI/2);
+      ey=hy+
+        (side==="top"?1:-1)*
+        Math.sin(open*Math.PI/2);
+    }else{
+      ex=hx+
+        (side==="left"?1:-1)*
+        Math.sin(open*Math.PI/2);
+
+      ey=hy+Math.cos(open*Math.PI/2);
+    }
+  }
+
+  const a=project(hx,hy,0);
+  const b=project(ex,ey,0);
+  const bt=project(ex,ey,1.5);
+  const at=project(hx,hy,1.5);
+
+  quad(ctx,at,bt,b,a,"#6f4932",1);
+
+  ctx.strokeStyle="#241a14";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(at.x,at.y);
+  ctx.lineTo(bt.x,bt.y);
+  ctx.lineTo(b.x,b.y);
+  ctx.stroke();
+
+  if(item.prop.buildingType==="deli"){
+    const awnZ=1.58;
+    const aa=project(hx,hy,awnZ);
+    const bb=project(ex,ey,awnZ);
+
+    const outX=
+      side==="left"?-.72:
+      side==="right"?.72:
+      0;
+
+    const outY=
+      side==="top"?-.72:
+      side==="bottom"?.72:
+      0;
+
+    const cc=project(
+      ex+outX,
+      ey+outY,
+      awnZ-.12
+    );
+
+    const dd=project(
+      hx+outX,
+      hy+outY,
+      awnZ-.12
+    );
+
+    quad(ctx,aa,bb,cc,dd,"#9b4c42",1);
+
+    const label=project(
+      item.x+.5,
+      item.y+.5,
+      2.25
+    );
+
+    ctx.save();
+    ctx.fillStyle="#202523";
+    ctx.fillRect(label.x-31,label.y-8,62,15);
+    ctx.strokeStyle="#d4c77c";
+    ctx.strokeRect(label.x-31,label.y-8,62,15);
+    ctx.fillStyle="#eee4ba";
+    ctx.font="bold 8px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(
+      "NEW DAWN DELI",
+      label.x,
+      label.y+2
+    );
+    ctx.restore();
+  }
+}
+
+function drawBalcony(item){
+  const prop=item.prop;
+  const z=prop.baseZ||2.58;
+
+  prism(
+    item.x,item.y,
+    prop.w,prop.h,
+    .16,
+    PROP_STYLE.balcony,
+    1,z
+  );
+
+  const low=[
+    project(item.x,item.y,z+.16),
+    project(item.x+prop.w,item.y,z+.16),
+    project(item.x+prop.w,item.y+prop.h,z+.16),
+    project(item.x,item.y+prop.h,z+.16)
+  ];
+
+  const high=[
+    project(item.x,item.y,z+.88),
+    project(item.x+prop.w,item.y,z+.88),
+    project(item.x+prop.w,item.y+prop.h,z+.88),
+    project(item.x,item.y+prop.h,z+.88)
+  ];
 
   ctx.save();
-  ctx.translate(x,y);
-  ctx.scale(scale,scale);
+  ctx.strokeStyle="#4d5351";
+  ctx.lineWidth=2;
+  ctx.beginPath();
 
-  ctx.fillStyle="#0008";
+  for(const i of[1,2,3]){
+    ctx.moveTo(low[i].x,low[i].y);
+    ctx.lineTo(high[i].x,high[i].y);
+  }
+
+  ctx.moveTo(high[1].x,high[1].y);
+  ctx.lineTo(high[2].x,high[2].y);
+  ctx.lineTo(high[3].x,high[3].y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGarageDoor(item){
+  const prop=item.prop;
+  const y=item.y+1;
+
+  const a=project(item.x,y,0);
+  const b=project(item.x+prop.w,y,0);
+  const bt=project(item.x+prop.w,y,2.65);
+  const at=project(item.x,y,2.65);
+
+  quad(ctx,at,bt,b,a,"#59666a",1);
+
+  ctx.save();
+  ctx.strokeStyle="#30383b";
+  ctx.lineWidth=2;
+
+  for(let i=1;i<7;i++){
+    const left=lerpPoint(at,a,i/7);
+    const right=lerpPoint(bt,b,i/7);
+
+    ctx.beginPath();
+    ctx.moveTo(left.x,left.y);
+    ctx.lineTo(right.x,right.y);
+    ctx.stroke();
+  }
+
+  const wa=lerpPoint(at,a,.22);
+  const wb=lerpPoint(bt,b,.22);
+  const wc=lerpPoint(bt,b,.42);
+  const wd=lerpPoint(at,a,.42);
+
+  quad(ctx,wa,wb,wc,wd,"#78959b",1);
+  ctx.restore();
+}
+
+function drawPoliceSign(item){
+  const prop=item.prop;
+  const y=item.y+1.02;
+
+  const a=project(item.x,y,1.95);
+  const b=project(item.x+prop.w,y,1.95);
+  const bt=project(item.x+prop.w,y,2.72);
+  const at=project(item.x,y,2.72);
+
+  quad(ctx,at,bt,b,a,"#d2d7d5",1);
+
+  const mid=project(
+    item.x+prop.w/2,
+    y,
+    2.34
+  );
+
+  ctx.save();
+  ctx.translate(mid.x,mid.y);
+  ctx.rotate(
+    Math.atan2(
+      b.y-a.y,
+      b.x-a.x
+    )
+  );
+  ctx.fillStyle="#263c48";
+  ctx.font="bold 12px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("POLICE",0,4);
+  ctx.restore();
+}
+
+function drawGate(item){
+  const prop=item.prop;
+  const y=item.y+.5;
+
+  const a=project(item.x,y,0);
+  const b=project(item.x+prop.w,y,0);
+  const at=project(item.x,y,1.15);
+  const bt=project(item.x+prop.w,y,1.15);
+
+  const middleA=lerpPoint(a,at,.45);
+  const middleB=lerpPoint(b,bt,.45);
+
+  ctx.save();
+  ctx.strokeStyle="#737b78";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(a.x,a.y);
+  ctx.lineTo(at.x,at.y);
+  ctx.lineTo(bt.x,bt.y);
+  ctx.lineTo(b.x,b.y);
+  ctx.moveTo(middleA.x,middleA.y);
+  ctx.lineTo(middleB.x,middleB.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTree(item,time){
+  const base=project(
+    item.x+.5,
+    item.y+.5,
+    0
+  );
+
+  const sway=Math.sin(
+    time*.0015+
+    item.x*.7+
+    item.y
+  )*4;
+
+  ctx.fillStyle="rgba(0,0,0,.32)";
   ctx.beginPath();
   ctx.ellipse(
-    3,
-    12,
-    9,
-    5,
-    0,
+    base.x+13,
+    base.y+4,
+    25,10,.2,
     0,
     Math.PI*2
   );
   ctx.fill();
 
-  ctx.fillStyle="#292c30";
-  ctx.fillRect(-6,2+bob,4,10);
-  ctx.fillRect(2,2-bob,4,10);
+  ctx.strokeStyle="#493522";
+  ctx.lineWidth=7;
+  ctx.beginPath();
+  ctx.moveTo(base.x,base.y);
+  ctx.lineTo(
+    base.x+sway*.35,
+    base.y-51
+  );
+  ctx.stroke();
 
-  ctx.fillStyle="#48545a";
-  ctx.fillRect(-7,-9,14,13);
+  const leaves=[
+    [0,-58,29,"#294b2c"],
+    [-18,-49,22,"#356039"],
+    [18,-48,21,"#203f26"],
+    [sway,-70,18,"#426d43"]
+  ];
 
-  ctx.fillStyle="#68767b";
-  ctx.fillRect(-6,-8,12,3);
-
-  ctx.fillStyle="#9b7155";
-  ctx.fillRect(-10,-7,3,10);
-  ctx.fillRect(7,-7,3,10);
-
-  ctx.fillStyle="#a77b5a";
-  ctx.fillRect(-5,-17,10,9);
-
-  ctx.fillStyle="#201b18";
-  ctx.fillRect(-5,-19,10,4);
-
-  ctx.restore();
+  for(const[ox,oy,r,color]of leaves){
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.arc(
+      base.x+ox+sway,
+      base.y+oy,
+      r,
+      0,
+      Math.PI*2
+    );
+    ctx.fill();
+  }
 }
 
-function draw(){
-  ctx.fillStyle="#090b0c";
-  ctx.fillRect(0,0,SW,SH);
+function drawVehicle(item,police){
+  const style={
+    top:police
+      ?"#d5d8d3"
+      :[
+          "#5b6265",
+          "#704640",
+          "#40524c",
+          "#3e5260"
+        ][hash(item.x,item.y,950)%4],
+    east:"#252b2e",
+    south:"#3a4143"
+  };
 
-  const left=
-    Math.floor((camera.x-SW/2)/CHUNK_PX)-1;
+  prism(
+    item.x,item.y,
+    2,4,.78,
+    style
+  );
 
-  const right=
-    Math.floor((camera.x+SW/2)/CHUNK_PX)+1;
+  prism(
+    item.x+.22,
+    item.y+.9,
+    1.56,2.15,.55,
+    {
+      top:"#314047",
+      east:"#172126",
+      south:"#253238"
+    },
+    1,.78
+  );
 
-  const top=
-    Math.floor((camera.y-SH/2)/CHUNK_PX)-1;
+  if(police){
+    prism(
+      item.x+.75,
+      item.y+1.75,
+      .5,.5,.14,
+      {
+        top:"#b94a43",
+        east:"#315b8a",
+        south:"#315b8a"
+      },
+      1,1.34
+    );
+  }
+}
 
-  const bottom=
-    Math.floor((camera.y+SH/2)/CHUNK_PX)+1;
+function drawPropItem(item,time){
+  const prop=item.prop;
 
-  const visible=[];
+  if(prop.kind==="door"){
+    drawDoorProp(item);
+    return;
+  }
 
-  for(let cy=top;cy<=bottom;cy++){
-    for(let cx=left;cx<=right;cx++){
-      visible.push(getChunk(cx,cy));
+  if(prop.kind==="tree"){
+    drawTree(item,time);
+    return;
+  }
+
+  if(prop.kind==="car"||prop.kind==="policeCar"){
+    drawVehicle(
+      item,
+      prop.kind==="policeCar"
+    );
+    return;
+  }
+
+  if(prop.kind==="balcony"){
+    drawBalcony(item);
+    return;
+  }
+
+  if(prop.kind==="garageDoor"){
+    drawGarageDoor(item);
+    return;
+  }
+
+  if(prop.kind==="policeSign"){
+    drawPoliceSign(item);
+    return;
+  }
+
+  if(prop.kind==="gate"){
+    drawGate(item);
+    return;
+  }
+
+  if(prop.kind==="awning")return;
+
+  if(prop.kind==="fence"){
+    drawWallItem({
+      x:item.x,
+      y:item.y,
+      type:"fence",
+      alpha:1,
+      window:false
+    });
+    return;
+  }
+
+  const style=
+    PROP_STYLE[prop.kind]||
+    PROP_STYLE.crate;
+
+  prism(
+    item.x,item.y,
+    prop.w,prop.h,
+    style.h,
+    style,
+    1,
+    prop.baseZ||0
+  );
+
+  if(prop.kind==="stairs"){
+    for(let i=0;i<3;i++){
+      prism(
+        item.x,
+        item.y+i*prop.h/3,
+        prop.w,
+        prop.h/3,
+        .16+i*.12,
+        {
+          top:"#8d887e",
+          east:"#44423e",
+          south:"#64615b"
+        }
+      );
+    }
+  }
+}
+
+function drawPlayerItem(){
+  const point=project(player.x,player.y,0);
+
+  const walk=player.moving
+    ?Math.sin(player.step)*6
+    :0;
+
+  ctx.fillStyle="rgba(0,0,0,.45)";
+  ctx.beginPath();
+  ctx.ellipse(
+    point.x+5,
+    point.y+3,
+    13,6,.15,
+    0,
+    Math.PI*2
+  );
+  ctx.fill();
+
+  ctx.strokeStyle="#25282b";
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.moveTo(point.x-3,point.y-19);
+  ctx.lineTo(point.x-6-walk*.25,point.y-2);
+  ctx.moveTo(point.x+3,point.y-19);
+  ctx.lineTo(point.x+7+walk*.25,point.y-2);
+  ctx.stroke();
+
+  ctx.fillStyle="#4e5c62";
+  ctx.fillRect(point.x-8,point.y-40,16,22);
+
+  ctx.fillStyle="#718087";
+  ctx.fillRect(point.x-7,point.y-39,14,4);
+
+  ctx.strokeStyle="#9f7455";
+  ctx.lineWidth=4;
+  ctx.beginPath();
+  ctx.moveTo(point.x-7,point.y-36);
+  ctx.lineTo(point.x-12+walk*.2,point.y-21);
+  ctx.moveTo(point.x+7,point.y-36);
+  ctx.lineTo(point.x+12-walk*.2,point.y-21);
+  ctx.stroke();
+
+  ctx.fillStyle="#aa7d5d";
+  ctx.beginPath();
+  ctx.arc(
+    point.x,
+    point.y-48,
+    7,
+    0,
+    Math.PI*2
+  );
+  ctx.fill();
+
+  ctx.fillStyle="#211b18";
+  ctx.fillRect(point.x-7,point.y-55,14,5);
+}
+
+function activeBuilding(){
+  return findBuildingAt(
+    player.x,
+    player.y
+  );
+}
+
+function distanceToBuilding(
+  building,
+  localX,
+  localY
+){
+  let nearest=Infinity;
+
+  for(const part of building.parts){
+    const dx=Math.max(
+      part.x-localX,
+      0,
+      localX-(part.x+part.w)
+    );
+
+    const dy=Math.max(
+      part.y-localY,
+      0,
+      localY-(part.y+part.h)
+    );
+
+    nearest=Math.min(
+      nearest,
+      Math.hypot(dx,dy)
+    );
+  }
+
+  return nearest;
+}
+
+function visibleBounds(){
+  const radius=Math.ceil(
+    Math.max(
+      SW/TILE_W,
+      SH/TILE_H
+    )
+  )+12;
+
+  return{
+    minX:Math.floor(player.x-radius),
+    maxX:Math.ceil(player.x+radius),
+    minY:Math.floor(player.y-radius),
+    maxY:Math.ceil(player.y+radius)
+  };
+}
+
+function gatherDynamic(bounds,dt){
+  const active=activeBuilding();
+  const items=[];
+
+  const minCX=Math.floor(bounds.minX/WORLD_CHUNK);
+  const maxCX=Math.floor(bounds.maxX/WORLD_CHUNK);
+  const minCY=Math.floor(bounds.minY/WORLD_CHUNK);
+  const maxCY=Math.floor(bounds.maxY/WORLD_CHUNK);
+
+  for(let cy=minCY;cy<=maxCY;cy++){
+    for(let cx=minCX;cx<=maxCX;cx++){
+      const chunk=getWorldChunk(cx,cy);
+      const ox=cx*WORLD_CHUNK;
+      const oy=cy*WORLD_CHUNK;
+
+      for(const building of chunk.buildings){
+        const distance=distanceToBuilding(
+          building,
+          player.x-ox,
+          player.y-oy
+        );
+
+        const target=
+          active?.uid===building.uid
+            ?.02
+            :distance<7
+              ?.07
+              :1;
+
+        building.roofAlpha+=
+          (target-building.roofAlpha)*
+          Math.min(1,dt*7);
+
+        if(building.roofAlpha>.025){
+          for(const tile of building.roofTiles){
+            const gx=ox+tile.x;
+            const gy=oy+tile.y;
+            const w=tile.w||1;
+            const h=tile.h||1;
+
+            const visible=
+              gx<=bounds.maxX+2&&
+              gx+w>=bounds.minX-2&&
+              gy<=bounds.maxY+2&&
+              gy+h>=bounds.minY-2;
+
+            if(!visible)continue;
+
+            items.push({
+              kind:"roof",
+              x:gx,
+              y:gy,
+              w,
+              h,
+              z:tile.z,
+              flat:tile.flat,
+              pitched:tile.pitched,
+              alpha:building.roofAlpha,
+              buildingType:building.type,
+              sort:
+                (
+                  gx+gy+
+                  (w+h)*.52
+                )*100+4
+            });
+          }
+        }
+      }
+
+      for(const[key,data]of chunk.walls){
+        const[lx,ly]=key
+          .split(",")
+          .map(Number);
+
+        const gx=ox+lx;
+        const gy=oy+ly;
+
+        if(
+          gx<bounds.minX-2||
+          gx>bounds.maxX+2||
+          gy<bounds.minY-2||
+          gy>bounds.maxY+2
+        )continue;
+
+        const foreground=
+          active?.uid===data.bid&&
+          gx+gy>player.x+player.y+.5;
+
+        items.push({
+          kind:"wall",
+          x:gx,
+          y:gy,
+          ...data,
+          alpha:foreground?.06:1,
+          sort:(gx+gy)*100+2
+        });
+      }
+
+      for(const prop of chunk.props){
+        const gx=ox+prop.x;
+        const gy=oy+prop.y;
+
+        if(
+          gx<bounds.minX-5||
+          gx>bounds.maxX+5||
+          gy<bounds.minY-5||
+          gy>bounds.maxY+5
+        )continue;
+
+        if(prop.kind==="door"){
+          const distance=Math.hypot(
+            player.x-(gx+.5),
+            player.y-(gy+.5)
+          );
+
+          const target=
+            distance<1.35
+              ?1
+              :0;
+
+          prop.anim+=
+            (target-prop.anim)*
+            Math.min(1,dt*9);
+        }
+
+        items.push({
+          kind:"prop",
+          x:gx,
+          y:gy,
+          prop,
+          sort:
+            (
+              gx+gy+
+              (prop.w+prop.h)*.45
+            )*100+3
+        });
+      }
     }
   }
 
-  for(const chunk of visible){
-    drawBase(chunk);
-    drawStreetDetails(chunk);
+  items.push({
+    kind:"player",
+    x:player.x,
+    y:player.y,
+    sort:(player.x+player.y)*100+3.5
+  });
+
+  items.sort((a,b)=>a.sort-b.sort);
+
+  return items;
+}
+
+function drawScene(dt,time){
+  frameNumber++;
+
+  ctx.fillStyle="#0a0d0e";
+  ctx.fillRect(0,0,SW,SH);
+
+  const bounds=visibleBounds();
+
+  const minRX=Math.floor(bounds.minX/RENDER_CHUNK);
+  const maxRX=Math.floor(bounds.maxX/RENDER_CHUNK);
+  const minRY=Math.floor(bounds.minY/RENDER_CHUNK);
+  const maxRY=Math.floor(bounds.maxY/RENDER_CHUNK);
+
+  const layers=[];
+
+  for(let ry=minRY;ry<=maxRY;ry++){
+    for(let rx=minRX;rx<=maxRX;rx++){
+      layers.push({
+        rx,
+        ry,
+        sort:rx+ry
+      });
+    }
   }
 
-  for(const chunk of visible){
-    drawFeatures(chunk);
+  layers.sort((a,b)=>a.sort-b.sort);
+
+  for(const layer of layers){
+    drawCachedChunk(layer.rx,layer.ry);
   }
 
-  drawPlayer();
+  const items=gatherDynamic(bounds,dt);
+
+  for(const item of items){
+    if(item.kind==="wall"){
+      drawWallItem(item);
+    }else if(item.kind==="roof"){
+      drawRoofItem(item);
+    }else if(item.kind==="prop"){
+      drawPropItem(item,time);
+    }else{
+      drawPlayerItem();
+    }
+  }
+
+  const vignette=ctx.createRadialGradient(
+    SW/2,
+    SH*.46,
+    Math.min(SW,SH)*.18,
+    SW/2,
+    SH*.48,
+    Math.max(SW,SH)*.68
+  );
+
+  vignette.addColorStop(
+    0,
+    "rgba(0,0,0,0)"
+  );
+
+  vignette.addColorStop(
+    1,
+    "rgba(0,0,0,.38)"
+  );
+
+  ctx.fillStyle=vignette;
+  ctx.fillRect(0,0,SW,SH);
+
+  if(frameNumber%120===0){
+    pruneCaches();
+  }
+
+  document.querySelector("#renderView").textContent=
+    `16M CHUNKS • ${renderCache.size} CACHED • ${worldChunks.size} WORLD`;
 }
 
 /* MENU */
 
 const menu=document.querySelector("#menu");
-const input=document.querySelector("#seed");
+const seedInput=document.querySelector("#seed");
 const continueButton=document.querySelector("#continue");
 
-function resetPlayer(){
-  player.x=ROAD*.5*PX;
-  player.y=ROAD*.5*PX;
+function resetWorld(){
+  worldChunks.clear();
+  renderCache.clear();
+
+  player.x=SPAWN_X;
+  player.y=SPAWN_Y;
   player.stamina=100;
+  player.step=0;
 
   camera.x=player.x;
   camera.y=player.y;
 
-  for(const keyName in keys){
-    keys[keyName]=false;
+  for(const key in keys){
+    keys[key]=false;
   }
 }
 
 function generateCity(){
   seedLabel=
-    input.value.trim()||randomSeed();
+    seedInput.value.trim()||
+    randomSeed();
 
-  input.value=seedLabel;
+  seedInput.value=seedLabel;
   worldSeed=seedNumber(seedLabel);
 
-  chunks.clear();
-  resetPlayer();
+  resetWorld();
 
   started=true;
   playing=true;
@@ -2171,14 +2672,18 @@ function generateCity(){
 
   try{
     localStorage.setItem(
-      "wnd-seed",
+      "wnd-iso-seed",
       seedLabel
     );
 
     const url=new URL(location.href);
     url.searchParams.set("seed",seedLabel);
 
-    history.replaceState(null,"",url);
+    history.replaceState(
+      null,
+      "",
+      url
+    );
   }catch{}
 }
 
@@ -2186,7 +2691,6 @@ function openMenu(){
   if(!started)return;
 
   playing=false;
-
   menu.classList.remove("hidden");
   document.body.classList.remove("playing");
 }
@@ -2195,10 +2699,8 @@ function resumeGame(){
   if(!started)return;
 
   playing=true;
-
   menu.classList.add("hidden");
   document.body.classList.add("playing");
-
   previousTime=performance.now();
 }
 
@@ -2222,9 +2724,9 @@ document.querySelector("#start").onclick=
   generateCity;
 
 document.querySelector("#random").onclick=()=>{
-  input.value=randomSeed();
-  input.focus();
-  input.select();
+  seedInput.value=randomSeed();
+  seedInput.focus();
+  seedInput.select();
 };
 
 document.querySelector("#menuBtn").onclick=
@@ -2232,7 +2734,7 @@ document.querySelector("#menuBtn").onclick=
 
 continueButton.onclick=resumeGame;
 
-input.onkeydown=event=>{
+seedInput.onkeydown=event=>{
   event.stopPropagation();
 
   if(event.key==="Enter"){
@@ -2241,39 +2743,45 @@ input.onkeydown=event=>{
 };
 
 try{
-  input.value=
-    new URL(location.href).searchParams.get("seed")||
-    localStorage.getItem("wnd-seed")||
+  seedInput.value=
+    new URL(location.href)
+      .searchParams
+      .get("seed")||
+    localStorage.getItem("wnd-iso-seed")||
     seedLabel;
 }catch{
-  input.value=seedLabel;
+  seedInput.value=seedLabel;
 }
 
-input.focus();
-input.select();
+seedInput.focus();
+seedInput.select();
 
-/* MOBILE CONTROLS */
+/* TOUCH CONTROLS */
 
 const joystick=document.querySelector("#joy");
 const stick=document.querySelector("#stick");
 const runButton=document.querySelector("#run");
 
-let joystickPointer=null;
+let joyPointer=null;
 
-function moveJoystick(event){
-  const bounds=joystick.getBoundingClientRect();
+function moveJoy(event){
+  const rect=joystick.getBoundingClientRect();
 
   const x=
     event.clientX-
-    (bounds.left+bounds.width/2);
+    (rect.left+rect.width/2);
 
   const y=
     event.clientY-
-    (bounds.top+bounds.height/2);
+    (rect.top+rect.height/2);
 
   const magnitude=Math.hypot(x,y);
   const limit=38;
-  const scale=magnitude>limit?limit/magnitude:1;
+
+  const scale=
+    magnitude>limit
+      ?limit/magnitude
+      :1;
 
   touchX=x*scale/limit;
   touchY=y*scale/limit;
@@ -2282,52 +2790,67 @@ function moveJoystick(event){
     `translate(${x*scale}px,${y*scale}px)`;
 }
 
-joystick.addEventListener("pointerdown",event=>{
-  joystickPointer=event.pointerId;
-  joystick.setPointerCapture(event.pointerId);
-  moveJoystick(event);
-});
-
-joystick.addEventListener("pointermove",event=>{
-  if(event.pointerId===joystickPointer){
-    moveJoystick(event);
+joystick.addEventListener(
+  "pointerdown",
+  event=>{
+    joyPointer=event.pointerId;
+    joystick.setPointerCapture(event.pointerId);
+    moveJoy(event);
   }
-});
+);
 
-function stopJoystick(event){
+joystick.addEventListener(
+  "pointermove",
+  event=>{
+    if(event.pointerId===joyPointer){
+      moveJoy(event);
+    }
+  }
+);
+
+function stopJoy(event){
   if(
-    joystickPointer!==null&&
-    (!event||event.pointerId===joystickPointer)
+    joyPointer!==null&&
+    (!event||event.pointerId===joyPointer)
   ){
-    joystickPointer=null;
+    joyPointer=null;
     touchX=0;
     touchY=0;
     stick.style.transform="";
   }
 }
 
-joystick.addEventListener("pointerup",stopJoystick);
-joystick.addEventListener("pointercancel",stopJoystick);
+joystick.addEventListener("pointerup",stopJoy);
+joystick.addEventListener("pointercancel",stopJoy);
 
-runButton.addEventListener("pointerdown",event=>{
-  touchRun=true;
-  runButton.setPointerCapture(event.pointerId);
-});
+runButton.addEventListener(
+  "pointerdown",
+  event=>{
+    touchRun=true;
+    runButton.setPointerCapture(event.pointerId);
+  }
+);
 
-runButton.addEventListener("pointerup",()=>{
-  touchRun=false;
-});
+runButton.addEventListener(
+  "pointerup",
+  ()=>{
+    touchRun=false;
+  }
+);
 
-runButton.addEventListener("pointercancel",()=>{
-  touchRun=false;
-});
+runButton.addEventListener(
+  "pointercancel",
+  ()=>{
+    touchRun=false;
+  }
+);
 
 /* GAME LOOP */
 
 let previousTime=performance.now();
 
 function gameLoop(time){
-  const deltaTime=Math.min(
+  const dt=Math.min(
     .05,
     (time-previousTime)/1000
   );
@@ -2336,12 +2859,12 @@ function gameLoop(time){
 
   if(started){
     if(playing){
-      update(deltaTime);
+      update(dt);
     }
 
-    draw();
+    drawScene(dt,time);
   }else{
-    ctx.fillStyle="#090b0c";
+    ctx.fillStyle="#090c0d";
     ctx.fillRect(0,0,SW,SH);
   }
 
@@ -2349,6 +2872,46 @@ function gameLoop(time){
 }
 
 requestAnimationFrame(gameLoop);
+
+/* DEBUG API */
+
+globalThis.WalkerNewDawn={
+  generateSeed(seed){
+    seedInput.value=String(seed);
+    generateCity();
+  },
+
+  getScale(){
+    return{
+      projection:"dimetric",
+      worldChunkMeters:64,
+      renderChunkMeters:16,
+      roadMeters:8,
+      walkMetersPerSecond:WALK_SPEED,
+      sprintMetersPerSecond:SPRINT_SPEED
+    };
+  },
+
+  getChunk(cx,cy){
+    const chunk=getWorldChunk(cx,cy);
+
+    return{
+      district:chunk.district,
+      buildings:chunk.buildings.map(building=>({
+        type:building.type,
+        parts:building.parts.map(part=>({...part})),
+        floorCells:building.cells.size
+      }))
+    };
+  },
+
+  getRenderStats(){
+    return{
+      worldChunks:worldChunks.size,
+      cachedRenderChunks:renderCache.size
+    };
+  }
+};
 </script>
 </body>
 </html>
