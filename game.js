@@ -4723,190 +4723,402 @@ globalThis.WalkerNewDawn={
 
 }
 /* =====================================================
-   CLEAN ROOF OVERRIDE
-   Paste at the VERY BOTTOM of game.js
+   WALKER NEW DAWN
+   ROOF SYSTEM V3
+   Main gable + annex lean-to + clean flat roofs
 ===================================================== */
 
 {
-  function cleanRoofBounds(building){
-    const cells=[...building.cells]
-      .map(key=>key.split(",").map(Number));
+  const roofFill=(points,color,alpha)=>{
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle=color;
 
-    const xs=cells.map(c=>c[0]);
-    const ys=cells.map(c=>c[1]);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x,points[0].y);
 
-    const minX=Math.min(...xs);
-    const maxX=Math.max(...xs);
-    const minY=Math.min(...ys);
-    const maxY=Math.max(...ys);
+    for(let i=1;i<points.length;i++){
+      ctx.lineTo(points[i].x,points[i].y);
+    }
 
-    return{
-      x:minX,
-      y:minY,
-      w:maxX-minX+1,
-      h:maxY-minY+1
-    };
-  }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
 
 
-  /* ==============================
-     ONE ROOF PER BUILDING
-  ============================== */
+  const roofStroke=(
+    points,
+    alpha,
+    width=1.5,
+    color="#211b19",
+    close=false
+  )=>{
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle=color;
+    ctx.lineWidth=width;
+    ctx.lineJoin="round";
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x,points[0].y);
+
+    for(let i=1;i<points.length;i++){
+      ctx.lineTo(points[i].x,points[i].y);
+    }
+
+    if(close){
+      ctx.closePath();
+    }
+
+    ctx.stroke();
+    ctx.restore();
+  };
+
+
+  /* =========================================
+     FIGURE OUT WHICH SIDE AN ANNEX IS ON
+  ========================================= */
+
+  const outsideSide=(main,piece)=>{
+
+    if(
+      piece.x+
+      piece.w<=
+      main.x+.01
+    ){
+      return"left";
+    }
+
+    if(
+      piece.x>=
+      main.x+
+      main.w-.01
+    ){
+      return"right";
+    }
+
+    if(
+      piece.y+
+      piece.h<=
+      main.y+.01
+    ){
+      return"top";
+    }
+
+    if(
+      piece.y>=
+      main.y+
+      main.h-.01
+    ){
+      return"bottom";
+    }
+
+
+    const pcx=
+      piece.x+
+      piece.w/2;
+
+    const pcy=
+      piece.y+
+      piece.h/2;
+
+    const mcx=
+      main.x+
+      main.w/2;
+
+    const mcy=
+      main.y+
+      main.h/2;
+
+
+    const dx=
+      pcx-mcx;
+
+    const dy=
+      pcy-mcy;
+
+
+    if(
+      Math.abs(dx)>
+      Math.abs(dy)
+    ){
+      return dx<0
+        ?"left"
+        :"right";
+    }
+
+
+    return dy<0
+      ?"top"
+      :"bottom";
+  };
+
+
+  /* =========================================
+     ANNEX ROOF OVERHANG
+  ========================================= */
+
+  const shedGeometry=(piece,side)=>{
+
+    const outside=.22;
+    const cross=.12;
+    const join=.02;
+
+    let x=piece.x;
+    let y=piece.y;
+    let w=piece.w;
+    let h=piece.h;
+
+
+    if(side==="left"){
+
+      x-=outside;
+      y-=cross;
+
+      w+=outside+join;
+      h+=cross*2;
+
+    }else if(side==="right"){
+
+      x-=join;
+      y-=cross;
+
+      w+=outside+join;
+      h+=cross*2;
+
+    }else if(side==="top"){
+
+      x-=cross;
+      y-=outside;
+
+      w+=cross*2;
+      h+=outside+join;
+
+    }else{
+
+      x-=cross;
+      y-=join;
+
+      w+=cross*2;
+      h+=outside+join;
+    }
+
+
+    return{x,y,w,h};
+  };
+
+
+  /* =========================================
+     BUILD ROOF GEOMETRY
+  ========================================= */
 
   buildRoof=function(building){
 
-    const box=
-      cleanRoofBounds(building);
-
-
-    /* HOUSES = PITCHED / HIP ROOF */
+    /* ======================
+       HOUSES
+    ====================== */
 
     if(building.type==="house"){
 
-      const overhang=.38;
+      const main=
+        building.parts[0];
 
-      building.roofTiles=[{
-        x:box.x-overhang,
-        y:box.y-overhang,
+      const over=.32;
+
+
+      /*
+        ONE clean main roof.
+
+        No more roof spanning the entire
+        irregular building.
+      */
+
+      const roofTiles=[{
+        x:
+          main.x-
+          over,
+
+        y:
+          main.y-
+          over,
 
         w:
-          box.w+
-          overhang*2,
+          main.w+
+          over*2,
 
         h:
-          box.h+
-          overhang*2,
+          main.h+
+          over*2,
 
         z:
           building.wallHeight+
-          .06,
+          .07,
 
-        pitched:true,
-        cleanRoof:true
+        pitched:{
+          kind:"gable"
+        }
       }];
+
+
+      /*
+        Smaller building sections get
+        lean-to roofs.
+
+        Only roof the section actually
+        sticking OUT of the main house.
+      */
+
+      for(
+        let i=1;
+        i<building.parts.length;
+        i++
+      ){
+
+        const annex=
+          building.parts[i];
+
+
+        const exposed=
+          subtractRect(
+            {...annex},
+            {...main}
+          );
+
+
+        for(const piece of exposed){
+
+          if(
+            piece.w<.2||
+            piece.h<.2
+          ){
+            continue;
+          }
+
+
+          const side=
+            outsideSide(
+              main,
+              piece
+            );
+
+
+          const geometry=
+            shedGeometry(
+              piece,
+              side
+            );
+
+
+          roofTiles.push({
+            ...geometry,
+
+            z:
+              building.wallHeight+
+              .04,
+
+            pitched:{
+              kind:"shed",
+              side
+            }
+          });
+        }
+      }
+
+
+      building.roofTiles=
+        roofTiles;
 
       return;
     }
 
 
-    /* OTHER BUILDINGS = FLAT ROOF */
+    /* ======================
+       APARTMENT / DELI /
+       POLICE
+    ====================== */
 
-    const overhang=.12;
+    /*
+      Keep their ACTUAL building shape.
 
-    building.roofTiles=[{
-      x:box.x-overhang,
-      y:box.y-overhang,
+      Apartments can stay U-shaped.
+      Police stations can stay L-shaped.
 
-      w:
-        box.w+
-        overhang*2,
+      No giant rectangle sealing the
+      courtyard anymore.
+    */
 
-      h:
-        box.h+
-        overhang*2,
+    const largest=
+      building.parts.reduce(
+        (best,part,index)=>{
 
-      z:
-        building.wallHeight+
-        .05,
+          const area=
+            part.w*
+            part.h;
 
-      flat:true,
-      cleanRoof:true
-    }];
+
+          return area>
+            best.area
+
+            ?{
+                index,
+                area
+              }
+
+            :best;
+
+        },
+        {
+          index:0,
+          area:-1
+        }
+      );
+
+
+    const over=.045;
+
+
+    building.roofTiles=
+      building.parts.map(
+        (part,index)=>({
+
+          x:
+            part.x-
+            over,
+
+          y:
+            part.y-
+            over,
+
+          w:
+            part.w+
+            over*2,
+
+          h:
+            part.h+
+            over*2,
+
+          z:
+            building.wallHeight+
+            .055,
+
+          flat:{
+            kind:"cleanPart",
+
+            primary:
+              index===
+              largest.index
+          }
+        })
+      );
   };
 
 
-  /* ==============================
-     BASIC ROOF PANEL
-  ============================== */
+  /* =========================================
+     MAIN HOUSE GABLE ROOF
+  ========================================= */
 
-  function roofPanel(
-    points,
-    color,
-    alpha
-  ){
-
-    ctx.save();
-
-    ctx.globalAlpha=
-      alpha;
-
-    ctx.fillStyle=
-      color;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      points[0].x,
-      points[0].y
-    );
-
-    for(
-      let i=1;
-      i<points.length;
-      i++
-    ){
-      ctx.lineTo(
-        points[i].x,
-        points[i].y
-      );
-    }
-
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-
-  function strokeRoofLine(
-    points,
-    alpha,
-    width=1.6
-  ){
-
-    ctx.save();
-
-    ctx.globalAlpha=
-      alpha;
-
-    ctx.strokeStyle=
-      "#241e1b";
-
-    ctx.lineWidth=
-      width;
-
-    ctx.lineJoin=
-      "round";
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-      points[0].x,
-      points[0].y
-    );
-
-    for(
-      let i=1;
-      i<points.length;
-      i++
-    ){
-      ctx.lineTo(
-        points[i].x,
-        points[i].y
-      );
-    }
-
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-
-  /* ==============================
-     CLEAN HOUSE HIP ROOF
-  ============================== */
-
-  function drawCleanHouseRoof(item){
+  function drawGableRoof(item){
 
     const{
       x,
@@ -4918,13 +5130,25 @@ globalThis.WalkerNewDawn={
     }=item;
 
 
+    /*
+      Lower pitch than before.
+
+      This is intentionally restrained so
+      houses don't look like giant tents.
+    */
+
     const rise=
       Math.min(
-        2.05,
+        1.75,
 
         Math.max(
-          1.1,
-          Math.min(w,h)*.18
+          1.05,
+
+          Math.min(
+            w,
+            h
+          )*
+          .13
         )
       );
 
@@ -4958,189 +5182,185 @@ globalThis.WalkerNewDawn={
       );
 
 
-    const panels=[];
+    let planeA;
+    let planeB;
 
     let ridgeA;
     let ridgeB;
 
+    let gable;
 
-    /* LONG ROOF LEFT -> RIGHT */
 
-    if(w>=h){
+    /* ======================
+       LONG NORTH/SOUTH
+    ====================== */
 
-      const inset=
-        Math.min(
-          w*.28,
-          h*.48
-        );
-
+    if(w<=h){
 
       ridgeA=
         project(
-          x+inset,
-          y+h/2,
+          x+w/2,
+          y,
           z+rise
         );
 
 
       ridgeB=
         project(
-          x+w-inset,
-          y+h/2,
+          x+w/2,
+          y+h,
           z+rise
         );
 
 
-      panels.push({
-        points:[
-          c0,
-          c1,
-          ridgeB,
-          ridgeA
-        ],
-
-        color:"#6a5047"
-      });
+      planeA=[
+        c0,
+        ridgeA,
+        ridgeB,
+        c3
+      ];
 
 
-      panels.push({
-        points:[
-          ridgeA,
-          ridgeB,
-          c2,
-          c3
-        ],
-
-        color:"#513c36"
-      });
+      planeB=[
+        ridgeA,
+        c1,
+        c2,
+        ridgeB
+      ];
 
 
-      panels.push({
-        points:[
-          c0,
-          ridgeA,
-          c3
-        ],
+      /*
+        Only draw the gable currently
+        facing the camera.
+      */
 
-        color:"#5d463f"
-      });
+      gable=
+        viewDepth(
+          x+w/2,
+          y+h
+        )
+        >=
+        viewDepth(
+          x+w/2,
+          y
+        )
 
+          ?[
+              c3,
+              ridgeB,
+              c2
+            ]
 
-      panels.push({
-        points:[
-          c1,
-          c2,
-          ridgeB
-        ],
-
-        color:"#76584c"
-      });
+          :[
+              c0,
+              ridgeA,
+              c1
+            ];
 
     }else{
 
-      /* LONG ROOF TOP -> BOTTOM */
-
-      const inset=
-        Math.min(
-          h*.28,
-          w*.48
-        );
-
+      /* ======================
+         LONG EAST/WEST
+      ====================== */
 
       ridgeA=
         project(
-          x+w/2,
-          y+inset,
+          x,
+          y+h/2,
           z+rise
         );
 
 
       ridgeB=
         project(
-          x+w/2,
-          y+h-inset,
+          x+w,
+          y+h/2,
           z+rise
         );
 
 
-      panels.push({
-        points:[
-          c0,
-          c1,
-          ridgeA
-        ],
-
-        color:"#6a5047"
-      });
+      planeA=[
+        c0,
+        c1,
+        ridgeB,
+        ridgeA
+      ];
 
 
-      panels.push({
-        points:[
-          ridgeA,
-          c1,
-          c2,
-          ridgeB
-        ],
-
-        color:"#76584c"
-      });
+      planeB=[
+        ridgeA,
+        ridgeB,
+        c2,
+        c3
+      ];
 
 
-      panels.push({
-        points:[
-          c3,
-          ridgeB,
-          c2
-        ],
+      gable=
+        viewDepth(
+          x+w,
+          y+h/2
+        )
+        >=
+        viewDepth(
+          x,
+          y+h/2
+        )
 
-        color:"#513c36"
-      });
+          ?[
+              c1,
+              ridgeB,
+              c2
+            ]
 
-
-      panels.push({
-        points:[
-          c0,
-          ridgeA,
-          ridgeB,
-          c3
-        ],
-
-        color:"#5d463f"
-      });
+          :[
+              c0,
+              ridgeA,
+              c3
+            ];
     }
 
 
-    /* DRAW BACK PARTS FIRST */
+    /*
+      Two simple roof slopes.
+
+      No four-way folded hip roof.
+    */
+
+    const panels=[
+      {
+        points:planeA,
+        color:"#58423d"
+      },
+
+      {
+        points:planeB,
+        color:"#6b5048"
+      }
+    ];
+
 
     panels.sort(
-      (a,b)=>{
+      (a,b)=>
 
-        const ay=
-          a.points.reduce(
-            (n,p)=>n+p.y,
-            0
-          )/
-          a.points.length;
+        a.points.reduce(
+          (n,p)=>n+p.y,
+          0
+        )/
+        a.points.length
 
+        -
 
-        const by=
-          b.points.reduce(
-            (n,p)=>n+p.y,
-            0
-          )/
-          b.points.length;
-
-
-        return ay-by;
-      }
+        b.points.reduce(
+          (n,p)=>n+p.y,
+          0
+        )/
+        b.points.length
     );
 
 
-    for(
-      const panel of panels
-    ){
+    for(const panel of panels){
 
-      roofPanel(
+      roofFill(
         panel.points,
         panel.color,
         alpha
@@ -5148,246 +5368,465 @@ globalThis.WalkerNewDawn={
     }
 
 
-    /* CLEAN OUTLINE */
+    /*
+      Front triangular gable.
+    */
 
-    strokeRoofLine(
+    roofFill(
+      gable,
+      "#4b3632",
+      alpha
+    );
+
+
+    /*
+      Clean outside trim.
+    */
+
+    roofStroke(
       [
         c0,
         c1,
         c2,
-        c3,
-        c0
+        c3
       ],
 
-      alpha*.82,
-      1.8
+      alpha*.78,
+
+      1.4,
+
+      "#2a211f",
+
+      true
     );
 
 
-    /* RIDGE */
+    /*
+      Ridge cap.
+    */
 
-    strokeRoofLine(
+    roofStroke(
       [
         ridgeA,
         ridgeB
       ],
 
-      alpha*.95,
-      2.2
+      alpha*.9,
+
+      1.7,
+
+      "#2a211f"
     );
   }
 
 
-  /* ==============================
-     CLEAN COMMERCIAL FLAT ROOF
-  ============================== */
+  /* =========================================
+     SMALL LEAN-TO ROOF
+  ========================================= */
 
-  function drawCleanFlatRoof(item){
+  function drawShedRoof(item){
 
-    const palette=
-      ROOF_COLORS[
-        item.buildingType
-      ]||
-      ROOF_COLORS.apartment;
-
-
-    const topColor=
-      palette[1]||
-      palette[0];
+    const{
+      x,
+      y,
+      w,
+      h,
+      z,
+      alpha
+    }=item;
 
 
-    /* MAIN ROOF SLAB */
+    const side=
+      item.pitched.side;
 
-    prism(
-      item.x,
-      item.y,
 
-      item.w,
-      item.h,
+    const rise=
+      Math.min(
+        .52,
 
-      .16,
+        Math.max(
+          .3,
 
-      {
-        top:topColor,
-        east:"#343737",
-        south:"#454847"
-      },
+          Math.min(
+            w,
+            h
+          )*
+          .1
+        )
+      );
 
-      item.alpha,
 
-      item.z-.16
+    let points;
+    let outerEdge;
+
+
+    if(side==="left"){
+
+      const o0=
+        project(
+          x,
+          y,
+          z
+        );
+
+      const o1=
+        project(
+          x,
+          y+h,
+          z
+        );
+
+      const i0=
+        project(
+          x+w,
+          y,
+          z+rise
+        );
+
+      const i1=
+        project(
+          x+w,
+          y+h,
+          z+rise
+        );
+
+
+      points=[
+        o0,
+        i0,
+        i1,
+        o1
+      ];
+
+      outerEdge=[
+        o0,
+        o1
+      ];
+
+    }else if(side==="right"){
+
+      const i0=
+        project(
+          x,
+          y,
+          z+rise
+        );
+
+      const i1=
+        project(
+          x,
+          y+h,
+          z+rise
+        );
+
+      const o0=
+        project(
+          x+w,
+          y,
+          z
+        );
+
+      const o1=
+        project(
+          x+w,
+          y+h,
+          z
+        );
+
+
+      points=[
+        i0,
+        o0,
+        o1,
+        i1
+      ];
+
+      outerEdge=[
+        o0,
+        o1
+      ];
+
+    }else if(side==="top"){
+
+      const o0=
+        project(
+          x,
+          y,
+          z
+        );
+
+      const o1=
+        project(
+          x+w,
+          y,
+          z
+        );
+
+      const i0=
+        project(
+          x,
+          y+h,
+          z+rise
+        );
+
+      const i1=
+        project(
+          x+w,
+          y+h,
+          z+rise
+        );
+
+
+      points=[
+        o0,
+        o1,
+        i1,
+        i0
+      ];
+
+      outerEdge=[
+        o0,
+        o1
+      ];
+
+    }else{
+
+      const i0=
+        project(
+          x,
+          y,
+          z+rise
+        );
+
+      const i1=
+        project(
+          x+w,
+          y,
+          z+rise
+        );
+
+      const o0=
+        project(
+          x,
+          y+h,
+          z
+        );
+
+      const o1=
+        project(
+          x+w,
+          y+h,
+          z
+        );
+
+
+      points=[
+        i0,
+        i1,
+        o1,
+        o0
+      ];
+
+      outerEdge=[
+        o0,
+        o1
+      ];
+    }
+
+
+    roofFill(
+      points,
+      "#51403b",
+      alpha
     );
 
 
-    /* SIMPLE PARAPET */
+    roofStroke(
+      points,
+      alpha*.7,
+      1.2,
+      "#2a211f",
+      true
+    );
 
-    const parapet={
-      top:"#666a68",
-      east:"#383d3b",
-      south:"#4b504d"
+
+    /*
+      Slightly stronger gutter/eave.
+    */
+
+    roofStroke(
+      outerEdge,
+      alpha*.85,
+      1.7,
+      "#2a211f"
+    );
+  }
+
+
+  /* =========================================
+     CLEAN FLAT ROOF
+  ========================================= */
+
+  function drawFlatRoofPart(item){
+
+    const{
+      x,
+      y,
+      w,
+      h,
+      z,
+      alpha
+    }=item;
+
+
+    /*
+      Muted roof membranes.
+
+      No giant parapet walls.
+    */
+
+    const palette={
+      apartment:"#4d504f",
+      deli:"#555047",
+      police:"#445158"
     };
 
 
-    const thickness=.18;
-    const height=.22;
+    const color=
+      palette[
+        item.buildingType
+      ]||
+      "#4d504f";
 
 
-    /* TOP EDGE */
+    const points=[
+      project(
+        x,
+        y,
+        z
+      ),
 
-    prism(
-      item.x,
-      item.y,
+      project(
+        x+w,
+        y,
+        z
+      ),
 
-      item.w,
-      thickness,
+      project(
+        x+w,
+        y+h,
+        z
+      ),
 
-      height,
+      project(
+        x,
+        y+h,
+        z
+      )
+    ];
 
-      parapet,
 
-      item.alpha,
+    /*
+      Just the actual flat roof surface.
 
-      item.z
+      The overlapping roof rectangles use
+      the same color, so they visually merge
+      into one U/L-shaped rooftop.
+    */
+
+    roofFill(
+      points,
+      color,
+      alpha
     );
 
 
-    /* BOTTOM EDGE */
+    /*
+      ONE tiny rooftop vent.
 
-    prism(
-      item.x,
-      item.y+
-      item.h-
-      thickness,
+      Not the huge wall-sized blocks visible
+      in your screenshot.
+    */
 
-      item.w,
-      thickness,
+    if(
+      item.flat?.primary&&
+      w>7&&
+      h>7
+    ){
 
-      height,
-
-      parapet,
-
-      item.alpha,
-
-      item.z
-    );
-
-
-    /* LEFT EDGE */
-
-    prism(
-      item.x,
-      item.y,
-
-      thickness,
-      item.h,
-
-      height,
-
-      parapet,
-
-      item.alpha,
-
-      item.z
-    );
+      const ventW=
+        Math.min(
+          .85,
+          w*.08
+        );
 
 
-    /* RIGHT EDGE */
-
-    prism(
-      item.x+
-      item.w-
-      thickness,
-
-      item.y,
-
-      thickness,
-      item.h,
-
-      height,
-
-      parapet,
-
-      item.alpha,
-
-      item.z
-    );
+      const ventH=
+        Math.min(
+          .85,
+          h*.08
+        );
 
 
-    /* ONE HVAC UNIT */
+      const ventX=
+        x+
+        w*.52-
+        ventW/2;
 
-    const unitW=
-      Math.min(
-        2.2,
-        Math.max(
-          1.1,
-          item.w*.15
-        )
+
+      const ventY=
+        y+
+        h*.48-
+        ventH/2;
+
+
+      prism(
+        ventX,
+        ventY,
+
+        ventW,
+        ventH,
+
+        .18,
+
+        {
+          top:"#707573",
+          east:"#414745",
+          south:"#555b58"
+        },
+
+        alpha,
+
+        z+.015
       );
-
-
-    const unitH=
-      Math.min(
-        1.8,
-        Math.max(
-          1,
-          item.h*.14
-        )
-      );
-
-
-    const unitX=
-      item.x+
-      item.w*.5-
-      unitW/2;
-
-
-    const unitY=
-      item.y+
-      item.h*.48-
-      unitH/2;
-
-
-    prism(
-      unitX,
-      unitY,
-
-      unitW,
-      unitH,
-
-      .42,
-
-      {
-        top:"#777c79",
-        east:"#3b4240",
-        south:"#565c59"
-      },
-
-      item.alpha,
-
-      item.z+.02
-    );
+    }
   }
 
 
-  /* ==============================
-     FINAL ROOF DRAWER
-  ============================== */
+  /* =========================================
+     FINAL ROOF ROUTER
+  ========================================= */
 
   drawRoofItem=function(item){
 
-    if(item.pitched){
+    if(
+      item.pitched?.kind===
+      "shed"
+    ){
 
-      drawCleanHouseRoof(
-        item
-      );
-
+      drawShedRoof(item);
       return;
     }
 
 
-    drawCleanFlatRoof(
-      item
-    );
+    if(item.pitched){
+
+      drawGableRoof(item);
+      return;
+    }
+
+
+    drawFlatRoofPart(item);
   };
 
 }
