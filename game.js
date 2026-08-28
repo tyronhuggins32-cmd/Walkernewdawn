@@ -3128,3 +3128,1597 @@ globalThis.WalkerNewDawn={
     };
   }
 };
+/* =========================================================
+   WALKER NEW DAWN
+   CAMERA + ROOF RECOVERY PATCH
+
+   Paste this at the VERY BOTTOM of game.js.
+   Do not delete the code above it.
+========================================================= */
+
+{
+  const facePairs=()=>{
+    switch(cameraRotation&3){
+      case 1:
+        return[
+          [1,2],
+          [0,1]
+        ];
+
+      case 2:
+        return[
+          [3,0],
+          [0,1]
+        ];
+
+      case 3:
+        return[
+          [3,0],
+          [2,3]
+        ];
+
+      default:
+        return[
+          [1,2],
+          [2,3]
+        ];
+    }
+  };
+
+
+  const faceColor=(top,a,b,colors)=>{
+    const center=
+      (
+        top[0].x+
+        top[1].x+
+        top[2].x+
+        top[3].x
+      )/4;
+
+    const mid=
+      (
+        top[a].x+
+        top[b].x
+      )/2;
+
+    return mid>=center
+      ?colors.east
+      :colors.south;
+  };
+
+
+  const edge=(x,y,z,dx,dy)=>{
+    const c=tileCorners(x,y,z);
+
+    if(dx===1){
+      return[c[1],c[2]];
+    }
+
+    if(dx===-1){
+      return[c[3],c[0]];
+    }
+
+    if(dy===1){
+      return[c[2],c[3]];
+    }
+
+    return[c[0],c[1]];
+  };
+
+
+  const dirKey=(dx,dy)=>
+    dx+","+dy;
+
+
+  /* =========================
+     CAMERA ROTATION
+  ========================= */
+
+  function rotateCameraSimple(){
+    if(!playing)return;
+
+    cameraRotation=
+      (cameraRotation+1)&3;
+
+    for(const k in keys){
+      keys[k]=false;
+    }
+
+    touchX=0;
+    touchY=0;
+    touchRun=false;
+
+    const stickNode=
+      document.querySelector("#stick");
+
+    if(stickNode){
+      stickNode.style.transform="";
+    }
+
+    const view=
+      document.querySelector("#renderView");
+
+    if(view){
+      view.textContent=
+        `16M CHUNKS • VIEW ${CAMERA_VIEW_NAMES[cameraRotation]}`;
+    }
+  }
+
+
+  const rotateButton=
+    document.querySelector("#rotateBtn");
+
+  if(rotateButton){
+    rotateButton.onclick=
+      rotateCameraSimple;
+  }
+
+
+  addEventListener("keydown",e=>{
+    if(
+      playing&&
+      e.key.toLowerCase()==="r"&&
+      !e.repeat
+    ){
+      e.preventDefault();
+
+      keys.r=false;
+
+      rotateCameraSimple();
+    }
+  });
+
+
+  /* =========================
+     ROTATION-AWARE MOVEMENT
+  ========================= */
+
+  update=function(dt){
+    let screenDX=
+      (keys.d||keys.arrowright?1:0)-
+      (keys.a||keys.arrowleft?1:0)+
+      touchX;
+
+    let screenDY=
+      (keys.s||keys.arrowdown?1:0)-
+      (keys.w||keys.arrowup?1:0)+
+      touchY;
+
+
+    /*
+      Convert screen movement into the
+      current rotated world direction.
+    */
+
+    const baseX=
+      screenDY+
+      screenDX;
+
+    const baseY=
+      screenDY-
+      screenDX;
+
+    const movement=
+      viewToWorld(
+        baseX,
+        baseY
+      );
+
+
+    let worldDX=
+      movement.x;
+
+    let worldDY=
+      movement.y;
+
+
+    const length=
+      Math.hypot(
+        worldDX,
+        worldDY
+      );
+
+
+    if(length>0){
+      worldDX/=length;
+      worldDY/=length;
+    }
+
+
+    const running=
+      (
+        keys.shift||
+        touchRun
+      )&&
+      player.stamina>0&&
+      length>.05;
+
+
+    const speed=
+      running
+        ?SPRINT_SPEED
+        :WALK_SPEED;
+
+
+    player.moving=
+      length>.05;
+
+
+    if(running){
+      player.stamina=
+        Math.max(
+          0,
+          player.stamina-
+          22*dt
+        );
+    }else{
+      player.stamina=
+        Math.min(
+          100,
+          player.stamina+
+          11*dt
+        );
+    }
+
+
+    if(player.moving){
+      player.step+=
+        dt*
+        speed*
+        5;
+
+      player.facing=
+        Math.abs(screenDX)>
+        Math.abs(screenDY)
+
+          ?screenDX>0
+            ?"right"
+            :"left"
+
+          :screenDY>0
+            ?"down"
+            :"up";
+    }
+
+
+    const nx=
+      player.x+
+      worldDX*
+      speed*
+      dt;
+
+    const ny=
+      player.y+
+      worldDY*
+      speed*
+      dt;
+
+
+    if(
+      !collisionAt(
+        nx,
+        player.y
+      )
+    ){
+      player.x=nx;
+    }
+
+
+    if(
+      !collisionAt(
+        player.x,
+        ny
+      )
+    ){
+      player.y=ny;
+    }
+
+
+    camera.x+=
+      (
+        player.x-
+        camera.x
+      )*
+      Math.min(
+        1,
+        dt*7
+      );
+
+
+    camera.y+=
+      (
+        player.y-
+        camera.y
+      )*
+      Math.min(
+        1,
+        dt*7
+      );
+
+
+    document
+      .querySelector("#stamina")
+      .style.width=
+        player.stamina+"%";
+
+
+    const cx=
+      Math.floor(
+        player.x/
+        WORLD_CHUNK
+      );
+
+    const cy=
+      Math.floor(
+        player.y/
+        WORLD_CHUNK
+      );
+
+
+    const chunk=
+      getWorldChunk(
+        cx,
+        cy
+      );
+
+
+    document
+      .querySelector("#area")
+      .textContent=
+        "NEW DAWN CITY • "+
+        chunk
+          .district
+          .toUpperCase();
+  };
+
+
+  /* =========================
+     CONNECT NEW ROOF DATA
+     TO OLD RENDER PIPELINE
+  ========================= */
+
+  const oldBuildRoof=
+    buildRoof;
+
+
+  buildRoof=function(building){
+    oldBuildRoof(building);
+
+
+    /*
+      House roofs already use the new
+      non-overlapping geometry.
+
+      Put the riseScale inside pitched
+      because gatherDynamic already copies
+      the pitched property.
+    */
+
+    if(building.type==="house"){
+
+      for(
+        const tile of
+        building.roofTiles
+      ){
+        tile.pitched={
+          riseScale:
+            tile.riseScale||
+            .2
+        };
+      }
+
+      return;
+    }
+
+
+    /*
+      Your current buildRoof already creates
+      cell-perfect flat roof data.
+
+      gatherDynamic was ignoring it.
+
+      Store that data inside "flat",
+      which gatherDynamic already copies.
+    */
+
+    if(building.roofTiles[0]){
+
+      const tile=
+        building.roofTiles[0];
+
+      tile.flat={
+        footprint:true,
+
+        cells:
+          tile.cells,
+
+        cellSet:
+          tile.cellSet,
+
+        localX:
+          tile.x,
+
+        localY:
+          tile.y
+      };
+    }
+  };
+
+
+  /* =========================
+     ROTATABLE WALLS
+  ========================= */
+
+  drawWallItem=function(item){
+
+    const height=
+      item.type==="fence"
+        ?1.05
+        :item.height||
+         WALL_HEIGHT;
+
+
+    const base=
+      tileCorners(
+        item.x,
+        item.y,
+        0
+      );
+
+
+    const top=
+      tileCorners(
+        item.x,
+        item.y,
+        height
+      );
+
+
+    const colors=
+      WALL_COLORS[item.type]||
+      WALL_COLORS.plaster;
+
+
+    const alpha=
+      item.alpha;
+
+
+    const pairs=
+      facePairs();
+
+
+    /*
+      Render the two walls currently
+      facing the camera.
+    */
+
+    for(
+      const[a,b]
+      of pairs
+    ){
+      quad(
+        ctx,
+
+        top[a],
+        top[b],
+
+        base[b],
+        base[a],
+
+        faceColor(
+          top,
+          a,
+          b,
+          colors
+        ),
+
+        alpha
+      );
+    }
+
+
+    /*
+      Top wall cap.
+    */
+
+    quad(
+      ctx,
+
+      top[0],
+      top[1],
+      top[2],
+      top[3],
+
+      colors.top,
+
+      alpha
+    );
+
+
+    /*
+      Foundation.
+    */
+
+    if(
+      item.type!=="fence"
+    ){
+      for(
+        const[a,b]
+        of pairs
+      ){
+        foundationBand(
+          top[a],
+          top[b],
+
+          base[b],
+          base[a],
+
+          height,
+          alpha
+        );
+      }
+    }
+
+
+    /*
+      Apartment windows.
+    */
+
+    if(
+      item.window&&
+      height>4.4
+    ){
+
+      for(
+        const[a,b]
+        of pairs
+      ){
+
+        windowOnFace(
+          top[a],
+          top[b],
+
+          base[b],
+          base[a],
+
+          alpha,
+          .15,
+          .38
+        );
+
+
+        windowOnFace(
+          top[a],
+          top[b],
+
+          base[b],
+          base[a],
+
+          alpha,
+          .6,
+          .82
+        );
+
+
+        floorBand(
+          top[a],
+          top[b],
+
+          base[b],
+          base[a],
+
+          alpha
+        );
+      }
+
+    }else if(
+      item.window&&
+      height>1.2
+    ){
+
+      for(
+        const[a,b]
+        of pairs
+      ){
+        windowOnFace(
+          top[a],
+          top[b],
+
+          base[b],
+          base[a],
+
+          alpha
+        );
+      }
+    }
+  };
+
+
+  /* =========================
+     ROTATABLE PROPS
+  ========================= */
+
+  prism=function(
+    x,
+    y,
+    w,
+    h,
+    height,
+    colors,
+    alpha=1,
+    baseZ=0
+  ){
+
+    const base=[
+      project(
+        x,
+        y,
+        baseZ
+      ),
+
+      project(
+        x+w,
+        y,
+        baseZ
+      ),
+
+      project(
+        x+w,
+        y+h,
+        baseZ
+      ),
+
+      project(
+        x,
+        y+h,
+        baseZ
+      )
+    ];
+
+
+    const top=[
+      project(
+        x,
+        y,
+        baseZ+
+        height
+      ),
+
+      project(
+        x+w,
+        y,
+        baseZ+
+        height
+      ),
+
+      project(
+        x+w,
+        y+h,
+        baseZ+
+        height
+      ),
+
+      project(
+        x,
+        y+h,
+        baseZ+
+        height
+      )
+    ];
+
+
+    for(
+      const[a,b]
+      of facePairs()
+    ){
+      quad(
+        ctx,
+
+        top[a],
+        top[b],
+
+        base[b],
+        base[a],
+
+        faceColor(
+          top,
+          a,
+          b,
+          colors
+        ),
+
+        alpha
+      );
+    }
+
+
+    quad(
+      ctx,
+
+      top[0],
+      top[1],
+      top[2],
+      top[3],
+
+      colors.top,
+
+      alpha
+    );
+  };
+
+
+  /* =========================
+     BETTER HOUSE ROOF
+  ========================= */
+
+  drawPitchedRoof=function(item){
+
+    const{
+      x,
+      y,
+      w,
+      h,
+      z,
+      alpha
+    }=item;
+
+
+    const riseScale=
+      typeof item.pitched==="object"
+        ?item.pitched.riseScale||.2
+        :.2;
+
+
+    const rise=
+      Math.min(
+        2.35,
+
+        Math.min(
+          w,
+          h
+        )*
+        riseScale
+      );
+
+
+    const palette=
+      ROOF_COLORS.house;
+
+
+    let slopes;
+    let ridge;
+    let gable;
+    let outline;
+
+
+    /*
+      Ridge runs north/south.
+    */
+
+    if(w<=h){
+
+      const l0=
+        project(
+          x,
+          y,
+          z
+        );
+
+      const l1=
+        project(
+          x,
+          y+h,
+          z
+        );
+
+      const r0=
+        project(
+          x+w,
+          y,
+          z
+        );
+
+      const r1=
+        project(
+          x+w,
+          y+h,
+          z
+        );
+
+
+      const northRidge=
+        project(
+          x+w/2,
+          y,
+          z+rise
+        );
+
+
+      const southRidge=
+        project(
+          x+w/2,
+          y+h,
+          z+rise
+        );
+
+
+      slopes=[
+        [
+          l0,
+          northRidge,
+          southRidge,
+          l1,
+          palette[0]
+        ],
+
+        [
+          northRidge,
+          r0,
+          r1,
+          southRidge,
+          palette[2]
+        ]
+      ];
+
+
+      ridge=[
+        northRidge,
+        southRidge
+      ];
+
+
+      outline=[
+        l0,
+        r0,
+        r1,
+        l1
+      ];
+
+
+      gable=
+        viewDepth(
+          x+w/2,
+          y+h
+        )
+        >=
+        viewDepth(
+          x+w/2,
+          y
+        )
+
+          ?[
+              l1,
+              southRidge,
+              r1
+            ]
+
+          :[
+              l0,
+              northRidge,
+              r0
+            ];
+
+    }else{
+
+      /*
+        Ridge runs east/west.
+      */
+
+      const t0=
+        project(
+          x,
+          y,
+          z
+        );
+
+      const t1=
+        project(
+          x+w,
+          y,
+          z
+        );
+
+      const b0=
+        project(
+          x,
+          y+h,
+          z
+        );
+
+      const b1=
+        project(
+          x+w,
+          y+h,
+          z
+        );
+
+
+      const leftRidge=
+        project(
+          x,
+          y+h/2,
+          z+rise
+        );
+
+
+      const rightRidge=
+        project(
+          x+w,
+          y+h/2,
+          z+rise
+        );
+
+
+      slopes=[
+        [
+          t0,
+          t1,
+          rightRidge,
+          leftRidge,
+          palette[0]
+        ],
+
+        [
+          leftRidge,
+          rightRidge,
+          b1,
+          b0,
+          palette[2]
+        ]
+      ];
+
+
+      ridge=[
+        leftRidge,
+        rightRidge
+      ];
+
+
+      outline=[
+        t0,
+        t1,
+        b1,
+        b0
+      ];
+
+
+      gable=
+        viewDepth(
+          x+w,
+          y+h/2
+        )
+        >=
+        viewDepth(
+          x,
+          y+h/2
+        )
+
+          ?[
+              t1,
+              rightRidge,
+              b1
+            ]
+
+          :[
+              t0,
+              leftRidge,
+              b0
+            ];
+    }
+
+
+    /*
+      Draw back roof slope first.
+    */
+
+    slopes.sort(
+      (a,b)=>
+        a
+          .slice(0,4)
+          .reduce(
+            (n,p)=>n+p.y,
+            0
+          )
+
+        -
+
+        b
+          .slice(0,4)
+          .reduce(
+            (n,p)=>n+p.y,
+            0
+          )
+    );
+
+
+    for(
+      const slope
+      of slopes
+    ){
+      quad(
+        ctx,
+
+        slope[0],
+        slope[1],
+        slope[2],
+        slope[3],
+
+        slope[4],
+
+        alpha
+      );
+    }
+
+
+    /*
+      Visible gable.
+    */
+
+    roofTriangle(
+      gable[0],
+      gable[1],
+      gable[2],
+
+      "#493831",
+
+      alpha
+    );
+
+
+    /*
+      Clean roof outline and ridge.
+    */
+
+    ctx.save();
+
+    ctx.globalAlpha=
+      alpha*.75;
+
+    ctx.strokeStyle=
+      "#251f1c";
+
+    ctx.lineWidth=
+      1.7;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      outline[0].x,
+      outline[0].y
+    );
+
+
+    for(
+      let i=1;
+      i<outline.length;
+      i++
+    ){
+      ctx.lineTo(
+        outline[i].x,
+        outline[i].y
+      );
+    }
+
+
+    ctx.closePath();
+
+
+    ctx.moveTo(
+      ridge[0].x,
+      ridge[0].y
+    );
+
+    ctx.lineTo(
+      ridge[1].x,
+      ridge[1].y
+    );
+
+    ctx.stroke();
+
+    ctx.restore();
+  };
+
+
+  /* =========================
+     REAL FLAT ROOF FOOTPRINT
+  ========================= */
+
+  const drawFootprintRoof=item=>{
+
+    const data=
+      item.flat;
+
+
+    const cells=
+      data.cells||
+      [];
+
+
+    const cellSet=
+      data.cellSet;
+
+
+    /*
+      Reconstruct chunk world offset.
+    */
+
+    const ox=
+      item.x-
+      data.localX;
+
+    const oy=
+      item.y-
+      data.localY;
+
+
+    const z=
+      item.z;
+
+    const alpha=
+      item.alpha;
+
+
+    const palette=
+      ROOF_COLORS[
+        item.buildingType
+      ]||
+      ROOF_COLORS.apartment;
+
+
+    const color=
+      palette[
+        hash(
+          Math.floor(item.x),
+          Math.floor(item.y),
+          910
+        )%
+        palette.length
+      ];
+
+
+    const allDirs=[
+      [1,0],
+      [-1,0],
+      [0,1],
+      [0,-1]
+    ];
+
+
+    const front=
+      new Set(
+        frontDirections()
+          .map(
+            ([dx,dy])=>
+              dirKey(
+                dx,
+                dy
+              )
+          )
+      );
+
+
+    /*
+      Roof thickness.
+      Only exposed camera-facing sides.
+    */
+
+    for(
+      const[cx,cy]
+      of cells
+    ){
+
+      for(
+        const[dx,dy]
+        of frontDirections()
+      ){
+
+        if(
+          cellSet.has(
+            cellKey(
+              cx+dx,
+              cy+dy
+            )
+          )
+        ){
+          continue;
+        }
+
+
+        const upper=
+          edge(
+            ox+cx,
+            oy+cy,
+            z,
+            dx,
+            dy
+          );
+
+
+        const lower=
+          edge(
+            ox+cx,
+            oy+cy,
+            z-.14,
+            dx,
+            dy
+          );
+
+
+        quad(
+          ctx,
+
+          upper[0],
+          upper[1],
+
+          lower[1],
+          lower[0],
+
+          dx!==0
+            ?"#302d2a"
+            :"#3a3531",
+
+          alpha
+        );
+      }
+    }
+
+
+    /*
+      Actual roof shape.
+
+      No more giant rectangle covering
+      empty courtyards.
+    */
+
+    ctx.save();
+
+    ctx.globalAlpha=
+      alpha;
+
+    ctx.fillStyle=
+      color;
+
+
+    for(
+      const[cx,cy]
+      of cells
+    ){
+
+      const c=
+        tileCorners(
+          ox+cx,
+          oy+cy,
+          z
+        );
+
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        c[0].x,
+        c[0].y
+      );
+
+      ctx.lineTo(
+        c[1].x,
+        c[1].y
+      );
+
+      ctx.lineTo(
+        c[2].x,
+        c[2].y
+      );
+
+      ctx.lineTo(
+        c[3].x,
+        c[3].y
+      );
+
+      ctx.closePath();
+
+      ctx.fill();
+    }
+
+
+    ctx.restore();
+
+
+    /*
+      Perimeter parapet.
+
+      Only goes around REAL outside edges.
+      This fixes the stacked buggy parapets.
+    */
+
+    for(
+      const[cx,cy]
+      of cells
+    ){
+
+      for(
+        const[dx,dy]
+        of allDirs
+      ){
+
+        if(
+          cellSet.has(
+            cellKey(
+              cx+dx,
+              cy+dy
+            )
+          )
+        ){
+          continue;
+        }
+
+
+        const low=
+          edge(
+            ox+cx,
+            oy+cy,
+            z+.01,
+            dx,
+            dy
+          );
+
+
+        const high=
+          edge(
+            ox+cx,
+            oy+cy,
+            z+.27,
+            dx,
+            dy
+          );
+
+
+        if(
+          front.has(
+            dirKey(
+              dx,
+              dy
+            )
+          )
+        ){
+
+          quad(
+            ctx,
+
+            high[0],
+            high[1],
+
+            low[1],
+            low[0],
+
+            "#50595c",
+
+            alpha*.95
+          );
+        }
+
+
+        ctx.save();
+
+        ctx.globalAlpha=
+          alpha*.7;
+
+        ctx.strokeStyle=
+          "#788184";
+
+        ctx.lineWidth=
+          1.2;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+          high[0].x,
+          high[0].y
+        );
+
+        ctx.lineTo(
+          high[1].x,
+          high[1].y
+        );
+
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+
+    /*
+      Find valid interior roof cells
+      for an HVAC unit.
+    */
+
+    const interior=
+      cells.filter(
+        ([cx,cy])=>
+          allDirs.every(
+            ([dx,dy])=>
+              cellSet.has(
+                cellKey(
+                  cx+dx,
+                  cy+dy
+                )
+              )
+          )
+      );
+
+
+    if(interior.length){
+
+      const[cx,cy]=
+        interior[
+          hash(
+            Math.floor(item.x),
+            Math.floor(item.y),
+            933
+          )%
+          interior.length
+        ];
+
+
+      prism(
+        ox+cx+.12,
+        oy+cy+.12,
+
+        .76,
+        .76,
+
+        .42,
+
+        {
+          top:"#767c79",
+          east:"#3c4341",
+          south:"#565d5a"
+        },
+
+        alpha,
+
+        z+.02
+      );
+    }
+  };
+
+
+  /* =========================
+     CONNECT FOOTPRINT RENDERER
+  ========================= */
+
+  const oldDrawRoofItem=
+    drawRoofItem;
+
+
+  drawRoofItem=function(item){
+
+    if(
+      item.flat&&
+      typeof item.flat==="object"&&
+      item.flat.footprint
+    ){
+      drawFootprintRoof(item);
+      return;
+    }
+
+
+    oldDrawRoofItem(item);
+  };
+
+
+  /* =========================
+     ROTATION DEPTH SORTING
+  ========================= */
+
+  const oldGatherDynamic=
+    gatherDynamic;
+
+
+  gatherDynamic=function(bounds,dt){
+
+    const items=
+      oldGatherDynamic(
+        bounds,
+        dt
+      );
+
+
+    const active=
+      activeBuilding();
+
+
+    for(
+      const item
+      of items
+    ){
+
+      if(
+        item.kind==="roof"
+      ){
+
+        item.sort=
+          viewDepth(
+            item.x+
+            item.w*.52,
+
+            item.y+
+            item.h*.52
+          )*
+          100+
+          4;
+
+      }else if(
+        item.kind==="wall"
+      ){
+
+        const foreground=
+          active?.uid===
+          item.bid&&
+
+          viewDepth(
+            item.x+.5,
+            item.y+.5
+          )
+          >
+          viewDepth(
+            player.x,
+            player.y
+          )+.5;
+
+
+        item.alpha=
+          foreground
+            ?.06
+            :1;
+
+
+        item.sort=
+          viewDepth(
+            item.x+.5,
+            item.y+.5
+          )*
+          100+
+          2;
+
+      }else if(
+        item.kind==="prop"
+      ){
+
+        item.sort=
+          viewDepth(
+            item.x+
+            item.prop.w*.45,
+
+            item.y+
+            item.prop.h*.45
+          )*
+          100+
+          3;
+
+      }else if(
+        item.kind==="player"
+      ){
+
+        item.sort=
+          viewDepth(
+            player.x,
+            player.y
+          )*
+          100+
+          3.5;
+      }
+    }
+
+
+    items.sort(
+      (a,b)=>
+        a.sort-
+        b.sort
+    );
+
+
+    return items;
+  };
+
+}
