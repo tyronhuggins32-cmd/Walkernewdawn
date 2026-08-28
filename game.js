@@ -5830,3 +5830,201 @@ globalThis.WalkerNewDawn={
   };
 
 }
+/* =========================================
+   ROOF RENDER + ENTRANCE FIX
+========================================= */
+
+{
+  /*
+    Treat the player as "inside" slightly before
+    crossing the doorway.
+
+    This makes the roof and front walls fade
+    before the interior starts showing.
+  */
+
+  activeBuilding=function(){
+
+    const inside=
+      findBuildingAt(
+        player.x,
+        player.y
+      );
+
+    if(inside){
+      return inside;
+    }
+
+
+    const cx=
+      Math.floor(
+        player.x/
+        WORLD_CHUNK
+      );
+
+    const cy=
+      Math.floor(
+        player.y/
+        WORLD_CHUNK
+      );
+
+
+    const chunk=
+      getWorldChunk(
+        cx,
+        cy
+      );
+
+
+    const ox=
+      cx*
+      WORLD_CHUNK;
+
+    const oy=
+      cy*
+      WORLD_CHUNK;
+
+
+    let nearest=null;
+
+    let nearestDistance=
+      1.65;
+
+
+    for(
+      const building
+      of chunk.buildings
+    ){
+
+      for(
+        const door
+        of building.doors
+      ){
+
+        const distance=
+          Math.hypot(
+
+            player.x-
+            (
+              ox+
+              door.x+
+              .5
+            ),
+
+            player.y-
+            (
+              oy+
+              door.y+
+              .5
+            )
+          );
+
+
+        if(
+          distance<
+          nearestDistance
+        ){
+
+          nearestDistance=
+            distance;
+
+          nearest=
+            building;
+        }
+      }
+    }
+
+
+    return nearest;
+  };
+
+
+  /*
+    Keep your existing dynamic renderer,
+    but repair roof sorting afterward.
+  */
+
+  const previousGatherDynamicV4=
+    gatherDynamic;
+
+
+  gatherDynamic=function(
+    bounds,
+    dt
+  ){
+
+    const items=
+      previousGatherDynamicV4(
+        bounds,
+        dt
+      );
+
+
+    for(
+      const item
+      of items
+    ){
+
+      if(
+        item.kind!==
+        "roof"
+      ){
+        continue;
+      }
+
+
+      /*
+        Sort each roof using its FRONTMOST
+        corner instead of the center.
+
+        This forces walls + furniture beneath
+        that roof section to render BEFORE it.
+      */
+
+      const farDepth=
+        Math.max(
+
+          viewDepth(
+            item.x,
+            item.y
+          ),
+
+          viewDepth(
+            item.x+
+            item.w,
+            item.y
+          ),
+
+          viewDepth(
+            item.x+
+            item.w,
+            item.y+
+            item.h
+          ),
+
+          viewDepth(
+            item.x,
+            item.y+
+            item.h
+          )
+        );
+
+
+      item.sort=
+        farDepth*
+        100+
+        95;
+    }
+
+
+    items.sort(
+      (a,b)=>
+        a.sort-
+        b.sort
+    );
+
+
+    return items;
+  };
+
+}
