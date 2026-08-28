@@ -261,3 +261,79 @@ body.playing #menuBtn{
   .types{grid-template-columns:repeat(2,1fr)}
   #renderView{display:none}
 }
+/* ==========================================
+   CAMERA BUTTON PATCH
+   Paste at the very bottom of style.css
+========================================== */
+
+#menuBtn,
+#rotateBtn{
+  display:none;
+  position:fixed;
+  right:14px;
+  z-index:8;
+
+  min-width:84px;
+
+  padding:
+    10px
+    13px;
+
+  border:
+    1px solid
+    #55584f;
+
+  background:
+    #111615e8;
+
+  color:
+    #ddd9c7;
+
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.4px;
+
+  backdrop-filter:
+    blur(4px);
+
+  box-shadow:
+    0 5px 15px
+    #0006;
+
+  user-select:none;
+
+  -webkit-tap-highlight-color:
+    transparent;
+}
+
+
+#menuBtn{
+  top:14px;
+}
+
+
+#rotateBtn{
+  top:58px;
+
+  border-color:
+    #77745a;
+
+  color:
+    #e1dcae;
+
+  cursor:pointer;
+}
+
+
+#menuBtn:active,
+#rotateBtn:active{
+  transform:
+    scale(.95);
+}
+
+
+body.playing #hud,
+body.playing #menuBtn,
+body.playing #rotateBtn{
+  display:block;
+}
