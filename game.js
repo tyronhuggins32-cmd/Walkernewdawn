@@ -6028,3 +6028,604 @@ globalThis.WalkerNewDawn={
   };
 
 }
+/* =========================================
+   ROOF FIX V5
+   Stable roof + clean entrance cutaway
+========================================= */
+
+{
+  /* Only count as inside when ACTUALLY inside. */
+  activeBuilding=function(){
+    return findBuildingAt(
+      player.x,
+      player.y
+    );
+  };
+
+
+  const roofFillV5=(points,color,alpha)=>{
+    ctx.save();
+
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle=color;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x,points[0].y);
+
+    for(let i=1;i<points.length;i++){
+      ctx.lineTo(
+        points[i].x,
+        points[i].y
+      );
+    }
+
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
+
+
+  const roofLineV5=(a,b,alpha,width=1.5)=>{
+    ctx.save();
+
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle="#261f1d";
+    ctx.lineWidth=width;
+
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y);
+    ctx.lineTo(b.x,b.y);
+    ctx.stroke();
+
+    ctx.restore();
+  };
+
+
+  /* =====================================
+     BUILD CLEAN ROOF GEOMETRY
+  ===================================== */
+
+  buildRoof=function(building){
+
+    const z=
+      building.wallHeight+
+      .08;
+
+
+    /* ---------- HOUSE ---------- */
+
+    if(building.type==="house"){
+
+      const main=
+        building.parts[0];
+
+      const over=.28;
+
+
+      const roofs=[{
+        x:main.x-over,
+        y:main.y-over,
+
+        w:
+          main.w+
+          over*2,
+
+        h:
+          main.h+
+          over*2,
+
+        z,
+
+        pitched:{
+          kind:"v5gable",
+          bid:building.uid
+        }
+      }];
+
+
+      /*
+        The small house extension gets
+        a simple flat roof.
+
+        NO shed slope.
+        NO warped intersection.
+      */
+
+      for(
+        let i=1;
+        i<building.parts.length;
+        i++
+      ){
+
+        const annex=
+          building.parts[i];
+
+
+        const exposed=
+          subtractRect(
+            {...annex},
+            {...main}
+          );
+
+
+        for(const piece of exposed){
+
+          if(
+            piece.w<=.05||
+            piece.h<=.05
+          ){
+            continue;
+          }
+
+
+          const overhang=.16;
+
+
+          roofs.push({
+            x:
+              piece.x-
+              overhang,
+
+            y:
+              piece.y-
+              overhang,
+
+            w:
+              piece.w+
+              overhang*2,
+
+            h:
+              piece.h+
+              overhang*2,
+
+            z:
+              building.wallHeight+
+              .055,
+
+            flat:{
+              kind:"v5annex",
+              bid:building.uid
+            }
+          });
+        }
+      }
+
+
+      building.roofTiles=
+        roofs;
+
+      return;
+    }
+
+
+    /* ---------- FLAT BUILDINGS ---------- */
+
+    /*
+      Apartments / deli / police use
+      their REAL building pieces.
+
+      No giant bounding-box roof.
+      No courtyard being covered.
+    */
+
+    building.roofTiles=
+      building.parts.map(
+        (part,index)=>({
+
+          x:part.x,
+          y:part.y,
+
+          w:part.w,
+          h:part.h,
+
+          z:
+            building.wallHeight+
+            .06,
+
+          flat:{
+            kind:"v5flat",
+            bid:building.uid,
+            primary:index===0
+          }
+        })
+      );
+  };
+
+
+  /* =====================================
+     HOUSE GABLE
+  ===================================== */
+
+  function drawV5Gable(item){
+
+    const{
+      x,
+      y,
+      w,
+      h,
+      z,
+      alpha
+    }=item;
+
+
+    const rise=
+      Math.min(
+        1.55,
+
+        Math.max(
+          .9,
+
+          Math.min(
+            w,
+            h
+          )*
+          .12
+        )
+      );
+
+
+    const c0=
+      project(x,y,z);
+
+    const c1=
+      project(x+w,y,z);
+
+    const c2=
+      project(x+w,y+h,z);
+
+    const c3=
+      project(x,y+h,z);
+
+
+    let ridgeA;
+    let ridgeB;
+
+    let sideA;
+    let sideB;
+
+
+    /* Long building north/south */
+
+    if(w<=h){
+
+      ridgeA=
+        project(
+          x+w/2,
+          y,
+          z+rise
+        );
+
+      ridgeB=
+        project(
+          x+w/2,
+          y+h,
+          z+rise
+        );
+
+
+      sideA=[
+        c0,
+        ridgeA,
+        ridgeB,
+        c3
+      ];
+
+      sideB=[
+        ridgeA,
+        c1,
+        c2,
+        ridgeB
+      ];
+
+    }else{
+
+      /* Long building east/west */
+
+      ridgeA=
+        project(
+          x,
+          y+h/2,
+          z+rise
+        );
+
+      ridgeB=
+        project(
+          x+w,
+          y+h/2,
+          z+rise
+        );
+
+
+      sideA=[
+        c0,
+        c1,
+        ridgeB,
+        ridgeA
+      ];
+
+      sideB=[
+        ridgeA,
+        ridgeB,
+        c2,
+        c3
+      ];
+    }
+
+
+    /*
+      Draw whichever slope is farther away first.
+    */
+
+    const depthA=
+      sideA.reduce(
+        (n,p)=>n+p.y,
+        0
+      )/
+      sideA.length;
+
+
+    const depthB=
+      sideB.reduce(
+        (n,p)=>n+p.y,
+        0
+      )/
+      sideB.length;
+
+
+    const first=
+      depthA<=depthB
+        ?sideA
+        :sideB;
+
+
+    const second=
+      depthA<=depthB
+        ?sideB
+        :sideA;
+
+
+    roofFillV5(
+      first,
+      "#57413b",
+      alpha
+    );
+
+
+    roofFillV5(
+      second,
+      "#6a4f46",
+      alpha
+    );
+
+
+    roofLineV5(
+      ridgeA,
+      ridgeB,
+      alpha*.9,
+      1.7
+    );
+  }
+
+
+  /* =====================================
+     FLAT ROOF / HOUSE EXTENSION
+  ===================================== */
+
+  function drawV5Flat(item){
+
+    let color;
+
+
+    if(
+      item.flat?.kind===
+      "v5annex"
+    ){
+
+      color="#59443d";
+
+    }else if(
+      item.buildingType===
+      "police"
+    ){
+
+      color="#455158";
+
+    }else if(
+      item.buildingType===
+      "deli"
+    ){
+
+      color="#554f47";
+
+    }else{
+
+      color="#4d504f";
+    }
+
+
+    const points=[
+      project(
+        item.x,
+        item.y,
+        item.z
+      ),
+
+      project(
+        item.x+item.w,
+        item.y,
+        item.z
+      ),
+
+      project(
+        item.x+item.w,
+        item.y+item.h,
+        item.z
+      ),
+
+      project(
+        item.x,
+        item.y+item.h,
+        item.z
+      )
+    ];
+
+
+    roofFillV5(
+      points,
+      color,
+      item.alpha
+    );
+  }
+
+
+  /* =====================================
+     FINAL ROOF DRAWER
+  ===================================== */
+
+  drawRoofItem=function(item){
+
+    if(
+      item.pitched?.kind===
+      "v5gable"
+    ){
+
+      drawV5Gable(item);
+      return;
+    }
+
+
+    drawV5Flat(item);
+  };
+
+
+  /* =====================================
+     FIX INTERIOR / ROOF CLASH
+  ===================================== */
+
+  const gatherBeforeV5=
+    gatherDynamic;
+
+
+  gatherDynamic=function(
+    bounds,
+    dt
+  ){
+
+    const inside=
+      findBuildingAt(
+        player.x,
+        player.y
+      );
+
+
+    /*
+      IMPORTANT:
+      No gradual half-transparent roof.
+
+      Outside = roof fully visible.
+      Inside = roof completely removed.
+    */
+
+    for(
+      const chunk
+      of worldChunks.values()
+    ){
+
+      for(
+        const building
+        of chunk.buildings
+      ){
+
+        building.roofAlpha=
+          inside?.uid===
+          building.uid
+
+            ?0
+            :1;
+      }
+    }
+
+
+    const items=
+      gatherBeforeV5(
+        bounds,
+        dt
+      );
+
+
+    for(const item of items){
+
+      if(
+        item.kind!==
+        "roof"
+      ){
+        continue;
+      }
+
+
+      const bid=
+        item.pitched?.bid||
+        item.flat?.bid;
+
+
+      /*
+        Never allow furniture/interior
+        to show through an opaque roof.
+      */
+
+      item.alpha=
+        inside?.uid===
+        bid
+
+          ?0
+          :1;
+
+
+      /*
+        Roof always renders after everything
+        underneath its footprint.
+      */
+
+      const frontDepth=
+        Math.max(
+
+          viewDepth(
+            item.x,
+            item.y
+          ),
+
+          viewDepth(
+            item.x+item.w,
+            item.y
+          ),
+
+          viewDepth(
+            item.x+item.w,
+            item.y+item.h
+          ),
+
+          viewDepth(
+            item.x,
+            item.y+item.h
+          )
+        );
+
+
+      item.sort=
+        frontDepth*
+        100+
+        90;
+    }
+
+
+    items.sort(
+      (a,b)=>
+        a.sort-
+        b.sort
+    );
+
+
+    return items;
+  };
+
+}
