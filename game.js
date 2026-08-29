@@ -6629,3 +6629,861 @@ globalThis.WalkerNewDawn={
   };
 
 }
+/* =====================================================
+   SMOOTH CAMERA + GUARANTEED HOUSE ENTRANCES
+===================================================== */
+
+{
+  /* ==================================================
+     SMOOTH CAMERA ROTATION
+  ================================================== */
+
+  const HALF_TURN=Math.PI/2;
+
+  let smoothCameraAngle=
+    (cameraRotation&3)*HALF_TURN;
+
+  let smoothCameraTarget=
+    smoothCameraAngle;
+
+  let smoothTurning=false;
+
+  let smoothTurnLast=
+    performance.now();
+
+
+  function cameraQuarter(angle){
+    const q=
+      Math.round(angle/HALF_TURN)%4;
+
+    return(q+4)%4;
+  }
+
+
+  /*
+    Continuous world rotation instead of
+    snapping instantly 90 degrees.
+  */
+
+  rotateView=function(dx,dy){
+
+    const c=
+      Math.cos(smoothCameraAngle);
+
+    const s=
+      Math.sin(smoothCameraAngle);
+
+
+    return{
+      x:
+        dx*c-
+        dy*s,
+
+      y:
+        dx*s+
+        dy*c
+    };
+  };
+
+
+  /*
+    Movement stays aligned with the screen
+    DURING the turn too.
+  */
+
+  viewToWorld=function(vx,vy){
+
+    const c=
+      Math.cos(smoothCameraAngle);
+
+    const s=
+      Math.sin(smoothCameraAngle);
+
+
+    return{
+      x:
+        vx*c+
+        vy*s,
+
+      y:
+        -vx*s+
+        vy*c
+    };
+  };
+
+
+  viewDepth=function(x,y){
+
+    const p=
+      rotateView(x,y);
+
+    return p.x+p.y;
+  };
+
+
+  project=function(x,y,z=0){
+
+    const view=
+      rotateView(
+        x-camera.x,
+        y-camera.y
+      );
+
+
+    return{
+      x:
+        SW/2+
+        (view.x-view.y)*
+        TILE_W/2,
+
+      y:
+        SH*.47+
+        (view.x+view.y)*
+        TILE_H/2-
+        z*Z_PX
+    };
+  };
+
+
+  /*
+    Rotate cached roads/grass/building floors
+    smoothly too.
+
+    This prevents the world floor from snapping
+    while walls rotate.
+  */
+
+  drawCachedChunk=function(rx,ry){
+
+    const layer=
+      getRenderChunk(rx,ry);
+
+
+    const origin=
+      project(
+        rx*RENDER_CHUNK,
+        ry*RENDER_CHUNK,
+        0
+      );
+
+
+    const anchorX=
+      RENDER_CHUNK*
+      TILE_W/2+
+      8;
+
+    const anchorY=8;
+
+
+    const c=
+      Math.cos(smoothCameraAngle);
+
+    const s=
+      Math.sin(smoothCameraAngle);
+
+
+    const wide=
+      TILE_W/
+      TILE_H;
+
+    const tall=
+      TILE_H/
+      TILE_W;
+
+
+    ctx.save();
+
+
+    /*
+      Slight smoothing only during rotation.
+      Returns to crisp rendering afterward.
+    */
+
+    ctx.imageSmoothingEnabled=
+      smoothTurning;
+
+
+    ctx.translate(
+      origin.x,
+      origin.y
+    );
+
+
+    ctx.transform(
+      c,
+      tall*s,
+      -wide*s,
+      c,
+      0,
+      0
+    );
+
+
+    ctx.drawImage(
+      layer,
+      -anchorX,
+      -anchorY
+    );
+
+
+    ctx.restore();
+  };
+
+
+  function animateSmoothTurn(now){
+
+    const dt=
+      Math.min(
+        .05,
+        (now-smoothTurnLast)/1000
+      );
+
+
+    smoothTurnLast=now;
+
+
+    const remaining=
+      smoothCameraTarget-
+      smoothCameraAngle;
+
+
+    /*
+      Exponential easing.
+
+      Quick start, soft landing.
+    */
+
+    const follow=
+      1-
+      Math.exp(
+        -dt*13.5
+      );
+
+
+    smoothCameraAngle+=
+      remaining*
+      follow;
+
+
+    /*
+      Switch visible wall faces around the
+      halfway point of the turn.
+    */
+
+    cameraRotation=
+      cameraQuarter(
+        smoothCameraAngle
+      );
+
+
+    if(
+      Math.abs(remaining)<
+      .002
+    ){
+
+      smoothCameraAngle=
+        smoothCameraTarget;
+
+
+      cameraRotation=
+        cameraQuarter(
+          smoothCameraAngle
+        );
+
+
+      smoothTurning=false;
+
+
+      const display=
+        document.querySelector(
+          "#renderView"
+        );
+
+
+      if(display){
+
+        display.textContent=
+          `16M CHUNKS • ${renderCache.size} CACHED • ${worldChunks.size} WORLD • VIEW ${CAMERA_VIEW_NAMES[cameraRotation]}`;
+      }
+
+
+      return;
+    }
+
+
+    requestAnimationFrame(
+      animateSmoothTurn
+    );
+  }
+
+
+  function smoothRotateCamera(){
+
+    if(!playing)return;
+
+
+    /*
+      Allows repeated taps to queue turns
+      instead of ignoring the player.
+    */
+
+    smoothCameraTarget+=
+      HALF_TURN;
+
+
+    if(!smoothTurning){
+
+      smoothTurning=true;
+
+      smoothTurnLast=
+        performance.now();
+
+
+      requestAnimationFrame(
+        animateSmoothTurn
+      );
+    }
+  }
+
+
+  /*
+    Replace old Rotate button behavior.
+  */
+
+  const smoothRotateButton=
+    document.querySelector(
+      "#rotateBtn"
+    );
+
+
+  if(smoothRotateButton){
+
+    smoothRotateButton.onclick=
+      smoothRotateCamera;
+  }
+
+
+  /*
+    Capture R before your old rotation
+    listener can trigger.
+
+    Prevents a double 90 degree turn.
+  */
+
+  addEventListener(
+    "keydown",
+
+    e=>{
+
+      if(
+        playing&&
+        e.key.toLowerCase()==="r"&&
+        !e.repeat
+      ){
+
+        e.preventDefault();
+
+        e.stopImmediatePropagation();
+
+        smoothRotateCamera();
+      }
+    },
+
+    true
+  );
+
+
+  /* ==================================================
+     STORE WHETHER PROPS REALLY BLOCK MOVEMENT
+  ================================================== */
+
+  const oldAddPropAccess=
+    addProp;
+
+
+  addProp=function(
+    chunk,
+    kind,
+    x,
+    y,
+    w=1,
+    h=1,
+    solid=false,
+    extra={}
+  ){
+
+    const prop=
+      oldAddPropAccess(
+        chunk,
+        kind,
+        x,
+        y,
+        w,
+        h,
+        solid,
+        extra
+      );
+
+
+    prop.solid=
+      !!solid;
+
+
+    return prop;
+  };
+
+
+  /* ==================================================
+     BETTER HOUSE DOOR PLACEMENT
+  ================================================== */
+
+  const oldPreferredDoorAccess=
+    preferredDoor;
+
+
+  preferredDoor=function(
+    building,
+    side
+  ){
+
+    if(
+      building.type!=="house"||
+      !building.parts?.length
+    ){
+
+      return oldPreferredDoorAccess(
+        building,
+        side
+      );
+    }
+
+
+    /*
+      Put house doors on the main building,
+      not the weird little annex.
+    */
+
+    const main=
+      building.parts[0];
+
+
+    const[
+      dx,
+      dy
+    ]=
+      sideVector(side);
+
+
+    const cells=
+      [...building.cells]
+        .map(
+          key=>
+            key
+              .split(",")
+              .map(Number)
+        );
+
+
+    const candidates=
+      cells.filter(
+        ([x,y])=>{
+
+          const onMain=
+            x>=main.x&&
+            x<main.x+main.w&&
+            y>=main.y&&
+            y<main.y+main.h;
+
+
+          if(!onMain){
+            return false;
+          }
+
+
+          /*
+            Must actually face outside.
+          */
+
+          if(
+            building.cells.has(
+              cellKey(
+                x+dx,
+                y+dy
+              )
+            )
+          ){
+            return false;
+          }
+
+
+          /*
+            Avoid building corners.
+          */
+
+          if(
+            side==="top"||
+            side==="bottom"
+          ){
+
+            return(
+              x>
+              main.x+1&&
+
+              x<
+              main.x+
+              main.w-
+              2
+            );
+          }
+
+
+          return(
+            y>
+            main.y+1&&
+
+            y<
+            main.y+
+            main.h-
+            2
+          );
+        }
+      );
+
+
+    if(!candidates.length){
+
+      return oldPreferredDoorAccess(
+        building,
+        side
+      );
+    }
+
+
+    /*
+      Slightly offset from the center because
+      your interior partition sits near center.
+    */
+
+    const target=
+      side==="top"||
+      side==="bottom"
+
+        ?main.x+
+         main.w*.78
+
+        :main.y+
+         main.h*.28;
+
+
+    candidates.sort(
+      (a,b)=>
+
+        side==="top"||
+        side==="bottom"
+
+          ?Math.abs(
+              a[0]-target
+            )-
+            Math.abs(
+              b[0]-target
+            )
+
+          :Math.abs(
+              a[1]-target
+            )-
+            Math.abs(
+              b[1]-target
+            )
+    );
+
+
+    return candidates[0];
+  };
+
+
+  /* ==================================================
+     GUARANTEE AN OPEN HALLWAY BEHIND EVERY HOUSE DOOR
+  ================================================== */
+
+  function propTouchesCell(
+    prop,
+    x,
+    y
+  ){
+
+    return(
+      prop.x<
+      x+1&&
+
+      prop.x+
+      prop.w>
+      x&&
+
+      prop.y<
+      y+1&&
+
+      prop.y+
+      prop.h>
+      y
+    );
+  }
+
+
+  function rebuildChunkSolids(
+    chunk
+  ){
+
+    chunk.solid.clear();
+
+
+    /*
+      Walls.
+    */
+
+    for(
+      const key
+      of chunk.walls.keys()
+    ){
+
+      chunk.solid.add(
+        key
+      );
+    }
+
+
+    /*
+      Furniture / blocking props.
+    */
+
+    for(
+      const prop
+      of chunk.props
+    ){
+
+      if(!prop.solid){
+        continue;
+      }
+
+
+      const minX=
+        Math.floor(prop.x);
+
+      const maxX=
+        Math.ceil(
+          prop.x+
+          prop.w
+        )-1;
+
+
+      const minY=
+        Math.floor(prop.y);
+
+      const maxY=
+        Math.ceil(
+          prop.y+
+          prop.h
+        )-1;
+
+
+      for(
+        let y=minY;
+        y<=maxY;
+        y++
+      ){
+
+        for(
+          let x=minX;
+          x<=maxX;
+          x++
+        ){
+
+          chunk.solid.add(
+            cellKey(x,y)
+          );
+        }
+      }
+    }
+  }
+
+
+  function guaranteeHouseEntrance(
+    chunk,
+    building
+  ){
+
+    for(
+      const door
+      of building.doors
+    ){
+
+      /*
+        sideVector points OUTSIDE.
+
+        Negative direction therefore moves
+        deeper inside the building.
+      */
+
+      const[
+        outX,
+        outY
+      ]=
+        sideVector(
+          door.side
+        );
+
+
+      const corridor=[
+
+        /* doorway */
+        [
+          door.x,
+          door.y
+        ],
+
+        /* three tiles inside */
+        [
+          door.x-outX,
+          door.y-outY
+        ],
+
+        [
+          door.x-outX*2,
+          door.y-outY*2
+        ],
+
+        [
+          door.x-outX*3,
+          door.y-outY*3
+        ],
+
+        /* one tile outside */
+        [
+          door.x+outX,
+          door.y+outY
+        ]
+      ];
+
+
+      /*
+        Remove interior walls blocking
+        the entrance corridor.
+      */
+
+      for(
+        const[x,y]
+        of corridor
+      ){
+
+        const key=
+          cellKey(x,y);
+
+
+        const wall=
+          chunk.walls.get(key);
+
+
+        if(
+          wall?.bid===
+          building.uid
+        ){
+
+          chunk.walls.delete(
+            key
+          );
+        }
+      }
+
+
+      /*
+        If stairs, table, dresser, etc.
+        generated directly in the doorway,
+        remove that object.
+
+        This is the bug making some houses
+        impossible to enter right now.
+      */
+
+      for(
+        let i=
+          chunk.props.length-1;
+
+        i>=0;
+
+        i--
+      ){
+
+        const prop=
+          chunk.props[i];
+
+
+        if(
+          prop.bid!==
+          building.uid||
+          !prop.solid
+        ){
+          continue;
+        }
+
+
+        const blocking=
+          corridor.some(
+            ([x,y])=>
+              propTouchesCell(
+                prop,
+                x,
+                y
+              )
+          );
+
+
+        if(blocking){
+
+          chunk.props.splice(
+            i,
+            1
+          );
+        }
+      }
+    }
+
+
+    rebuildChunkSolids(
+      chunk
+    );
+  }
+
+
+  /*
+    Important:
+    Doors are created BEFORE furnishHouse().
+
+    So repair the doorway AFTER all furniture
+    and interior walls have been generated.
+  */
+
+  const oldFurnishHouseAccess=
+    furnishHouse;
+
+
+  furnishHouse=function(
+    chunk,
+    building,
+    anchorX,
+    anchorY
+  ){
+
+    oldFurnishHouseAccess(
+      chunk,
+      building,
+      anchorX,
+      anchorY
+    );
+
+
+    guaranteeHouseEntrance(
+      chunk,
+      building
+    );
+  };
+
+}
